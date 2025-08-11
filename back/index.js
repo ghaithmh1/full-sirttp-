@@ -1,3 +1,4 @@
+
 require("dotenv").config();
 const express = require("express");
 const http = require("http");
@@ -14,6 +15,14 @@ const server = http.createServer(app);
 
 
 app.use(express.json());
+
+app.use(cors({
+  origin: "http://localhost:5173", // Your Vite frontend URL
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+}));
+
+
 
 // Connect DB
 connectDB();

@@ -1,35 +1,34 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ArticleList from './components/article/ArticleList';
+import ArticleForm from './components/article/ArticleForm';
+import CarForm from './components/car/CarForm';
+import CarList from './components/car/CarList';
+import FournisseurList from './components/fournisseur/FournisseurList';
+import FournisseurForm from './components/fournisseur/FournisseurForm'; 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <BrowserRouter>
+      <div className="container py-4">
+        <Routes>
+          <Route path="/Article" element={<ArticleList />} />
+          <Route path="/createArticle" element={<ArticleForm />} />
+          <Route path="/editArticle/:id" element={<ArticleForm />} />
+
+
+
+          <Route path="/car" element={<CarList/>} />
+          <Route path="/createCar" element={<CarForm />} />
+          <Route path="/editCar/:id" element={<CarForm />} />
+
+
+
+          <Route path="/Fournisseur" element={<FournisseurList />} />
+          <Route path="/createFournisseur" element={<FournisseurForm />} />
+          <Route path="/editFournisseur/:id" element={<FournisseurForm />} />
+        </Routes>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;    

@@ -28,6 +28,18 @@ async function getCar(req, res, next) {
 
 // Create car
 async function createCar(req, res) {
+   // Validate required fields
+  if (!req.body.name || !req.body.model || !req.body.serie || 
+      !req.body.registrationCard || !req.body.insurance || !req.body.mileage) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  // Validate mileage is a number
+  if (isNaN(req.body.mileage)) {
+    return res.status(400).json({ message: 'Mileage must be a number' });
+  }
+
+
   const car = new Car({
     name: req.body.name,
     model: req.body.model,
@@ -37,11 +49,14 @@ async function createCar(req, res) {
     mileage: req.body.mileage
   });
 
-  try {
+    try {
     const newCar = await car.save();
     res.status(201).json(newCar);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ 
+      message: err.message,
+      errors: err.errors // Include validation errors if using Mongoose validation
+    });
   }
 }
 

@@ -8,4 +8,4 @@ const fournisseurSchema = new mongoose.Schema({
   address: String,
 }, { timestamps: true });
 
-module.exports = mongoose.model("Fournisseur", fournisseurSchema);
+module.exports = mongoose.model("Fournisseur", fournisseurSchema);     

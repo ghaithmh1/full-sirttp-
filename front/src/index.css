@@ -65,4 +65,14 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+
+  body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  padding: 20px;
+}
+.container {
+  max-width: 800px;
+}
+
 }
