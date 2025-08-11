@@ -4,16 +4,15 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const connectDB = require("./config/db");
+const config = require("./config/config");
+
+const globalErrorHandler = require("./middlewares/globalErrorHandler");
 
 const app = express();
 const server = http.createServer(app);
 
-// Middleware
-app.use(cors({
-  origin: "http://localhost:5173",
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  credentials: true,
-}));
+
+
 app.use(express.json());
 
 // Connect DB
@@ -41,13 +40,27 @@ const userRoutes = require("./routes/userRoute");
 const entrepriseRoutes = require("./routes/entrepriseRoutes");
 const carRoutes = require('./routes/carRoutes'); 
 const articleRoutes = require('./routes/articleRoutes'); 
+const clientRoutes = require("./routes/clientRoutes");
+const fournisseurRoutes = require("./routes/fournisseurRoutes");
+const sousTraitantRoutes = require("./routes/sousTraitantRoutes");
 
 
+// Root route:
+app.get("/", (req, res) => {
+  
+  res.json({ message: "Hello from Our Server!" });
+});  
+
+
+
+// Mount routes:
 app.use("/api/user", userRoutes);
 app.use("/api/entreprise",entrepriseRoutes)
 app.use('/api/cars', carRoutes);
 app.use('/api/articles', articleRoutes);
-
+app.use("/api/clients", clientRoutes);
+app.use("/api/fournisseurs", fournisseurRoutes);
+app.use("/api/sousTraitants", sousTraitantRoutes);
 
 
 // Basic route for testing   
@@ -55,23 +68,18 @@ app.get('/', (req, res) => {
   res.send('Car Management API is running');
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
-});
 
 
 
 
 
 
-
+// Error handler:
+app.use(globalErrorHandler);
 
 
 
 // Lancement serveur
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-);
+app.listen(config.port, () => {
+    console.log(`Server listening on port ${config.port}`);
+  });
