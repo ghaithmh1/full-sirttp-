@@ -73,6 +73,7 @@ module.exports.register = asyncHandler(async (req, res) => {
   }
 });
 module.exports.login = asyncHandler(async (req, res) => {
+  try{
   const { email, pwd } = req.body;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -104,5 +105,27 @@ module.exports.login = asyncHandler(async (req, res) => {
     email: userExiste.email,
     token: userExiste.generateAuthToken(),
     role: userExiste.role,
-  });
+  });}
+  catch (err) {
+    console.error("Erreur inscription :", err);
+    res.status(500).json({ message: "Erreur serveur" });}
+  
+});
+module.exports.checkEmail=asyncHandler(async(req,res)=>{
+  try {
+    const {email}=req.body;
+    if (!email) {
+            return res.status(400).json({ message: "Email requis" });
+    }
+    const user=await User.findOne({email});
+    if (!user) {
+      return res.status(404).json({ message: "Email non trouvé" });
+    } else {
+      return res.status(200).json({ message: "Email trouvé" });
+    }
+  } catch (err) {
+    console.error("Erreur checkEmail :", err);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+
 });
