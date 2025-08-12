@@ -11,8 +11,11 @@ import FournisseurForm from './components/fournisseur/FournisseurForm';
 import ClientManager from "./components/Client/clientManager";
 import FournisseurManager from "./components/Fournisseurs/fournisseurManager";
 import SousTraitantManager from "./components/SousTraitant/sousTraitantManager";
+<<<<<<< HEAD
 import Home from './components/usercomponents/home.jsx';
 
+=======
+>>>>>>> a01438bb3d4ec4f9a311f50901848bae7f35442b
 function App() {
   return (
     <BrowserRouter>
@@ -47,7 +50,11 @@ function App() {
 
 
         </Routes>
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> a01438bb3d4ec4f9a311f50901848bae7f35442b
       </div>
     </BrowserRouter>
   );
