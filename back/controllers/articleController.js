@@ -1,8 +1,17 @@
 const Article = require('../models/Article');
-
+const mongoose=require("mongoose")
 async function getArticles(req, res) {
   try {
-    const articles = await Article.find();
+      const Articles = await Article.find();
+      res.json(Articles);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+}}
+async function getArticlesByEntrepriseId(req, res) {
+  try {
+    const { entrepriseId } = req.params;
+    const entrepriseObjectId = new mongoose.Types.ObjectId(entrepriseId);
+    const articles = await Article.find({ entrepriseId: entrepriseObjectId });
     res.json(articles);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -27,9 +36,10 @@ async function createArticle(req, res) {
   const article = new Article({
     name: req.body.name,
     model: req.body.model,
+    entrepriseId:req.body.entrepriseId,
   });
   try {
-    const newArticle = await article.save(); // ✅ Save instance
+    const newArticle = await article.save(); 
     res.status(201).json(newArticle);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -60,5 +70,5 @@ module.exports = {
   getArticle,
   createArticle,
   updateArticle,
-  deleteArticle
+  deleteArticle,getArticlesByEntrepriseId
 };

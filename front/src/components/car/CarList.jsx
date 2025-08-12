@@ -1,20 +1,34 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getCars, deleteCar } from '../../services/carApi';
+import { getCarsByEntrepriseId, deleteCar } from '../../services/carApi';
 import CarItem from './CarItem';
 
 const CarList = () => {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [entrepriseId, setEntrepriseId] = useState(null);
 
-  useEffect(() => {
-    fetchCars();
+    useEffect(() => {
+    const storedId = localStorage.getItem("entrepriseId");
+    if (storedId) {
+      setEntrepriseId(storedId);
+    } else {
+      setError('Entreprise ID not found in localStorage');
+      setLoading(false);
+    }
   }, []);
+    useEffect(() => {
+    if (entrepriseId) {
+      fetchCars(entrepriseId);
+    }
+  }, [entrepriseId]);
 
-  const fetchCars = async () => {
+
+  const fetchCars = async (id) => {
     try {
-      const { data } = await getCars(); // Direct array response
+      setLoading(true);
+      const { data } = await getCarsByEntrepriseId(id); // Direct array response
       setCars(data);
       setError(null);
     } catch (err) {

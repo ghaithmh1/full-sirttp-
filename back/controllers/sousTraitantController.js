@@ -2,9 +2,28 @@ const createHttpError = require("http-errors");
 const SousTraitant = require("../models/sousTraitantModel");
 const { default: mongoose } = require("mongoose");
 
+async function getSousTraitantByEntrepriseId(req, res) {
+  try {
+    const { entrepriseId } = req.params;
+    const entrepriseObjectId = new mongoose.Types.ObjectId(entrepriseId);
+    const sousTraitants = await sousTraitant.find({ entrepriseId: entrepriseObjectId });
+    res.json(sousTraitants);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+
 const addSousTraitant = async (req, res, next) => {
   try {
-    const sousTraitant = new SousTraitant(req.body);
+    const sousTraitant = new SousTraitant({
+      name: req.body.name,
+    email: req.body.email,
+      phone:req.body.phone ,
+    address:req.body.address ,
+    entrepriseId:req.body.entrepriseId,
+
+    });
     await sousTraitant.save();
     res
       .status(201)
@@ -107,4 +126,4 @@ const deleteSousTraitant = async (req, res, next) => {
 };
 
 
-module.exports = { addSousTraitant, getSousTraitantById, getSousTraitants, updateSousTraitant, deleteSousTraitant };
+module.exports = { getSousTraitantByEntrepriseId,addSousTraitant, getSousTraitantById, getSousTraitants, updateSousTraitant, deleteSousTraitant };

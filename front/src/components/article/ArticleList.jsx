@@ -1,21 +1,34 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getArticles, deleteArticle } from '../../services/api';
+import { getArticlesByEntrepriseId, deleteArticle } from '../../services/api';
 import ArticleItem from './ArticleItem';
 
 const ArticleList = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [entrepriseId, setEntrepriseId] = useState(null);
 
   useEffect(() => {
-    fetchArticles();
+    const storedId = localStorage.getItem("entrepriseId");
+    if (storedId) {
+      setEntrepriseId(storedId);
+    } else {
+      setError('Entreprise ID not found in localStorage');
+      setLoading(false);
+    }
   }, []);
 
-  const fetchArticles = async () => {
+  useEffect(() => {
+    if (entrepriseId) {
+      fetchArticles(entrepriseId);
+    }
+  }, [entrepriseId]);
+
+  const fetchArticles = async (id) => {
     try {
       setLoading(true);
-      const { data } = await getArticles();
+      const { data } = await getArticlesByEntrepriseId(id);
       setArticles(data);
       setError(null);
     } catch (err) {
@@ -30,7 +43,7 @@ const ArticleList = () => {
     if (window.confirm('Are you sure you want to delete this article?')) {
       try {
         await deleteArticle(id);
-        fetchArticles();
+        fetchArticles(entrepriseId);
       } catch (err) {
         console.error('Delete failed:', err);
         alert('Delete failed. Please try again.');
@@ -46,7 +59,7 @@ const ArticleList = () => {
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Articles</h2>
-        <Link to="/create" className="btn btn-primary">
+        <Link to="/createArticle" className="btn btn-primary">
           + Create Article
         </Link>
       </div>

@@ -8,6 +8,11 @@ import CarForm from './components/car/CarForm';
 import CarList from './components/car/CarList';
 import FournisseurList from './components/fournisseur/FournisseurList';
 import FournisseurForm from './components/fournisseur/FournisseurForm';
+import ClientManager from "./components/Client/clientManager";
+import FournisseurManager from "./components/Fournisseurs/fournisseurManager";
+import SousTraitantManager from "./components/SousTraitant/sousTraitantManager";
+import Home from './components/usercomponents/home.jsx';
+
 function App() {
   return (
     <BrowserRouter>
@@ -16,6 +21,7 @@ function App() {
           <Route path="/" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/entreprise" element={<CreateEntreprise />} />
+          <Route path="/home" element={<Home />} />
 
 
           <Route path="/Article" element={<ArticleList />} />
@@ -35,7 +41,13 @@ function App() {
           <Route path="/editFournisseur/:id" element={<FournisseurForm />} />
 
 
+          <Route path="/clients" element={<ClientManager />} />
+          <Route path="/fournisseurs" element={<FournisseurManager />} />
+          <Route path="/sousTraitants" element={<SousTraitantManager />} />
+
+
         </Routes>
+
       </div>
     </BrowserRouter>
   );

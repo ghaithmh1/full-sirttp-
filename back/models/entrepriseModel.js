@@ -4,7 +4,7 @@ const entrepriseSchema = new mongoose.Schema({
   identifiantFiscal: {
     type: String,
     required: true,
-    unique: true, // Clé primaire
+    unique: true,
     trim: true
   },
   nom: {
@@ -26,11 +26,11 @@ const entrepriseSchema = new mongoose.Schema({
   telephone: {
     type: String,
     required: true,
-    match: /^[259]\d{7}$/ // commence par 2, 5 ou 9 + 8 chiffres
+    match: /^[259]\d{7}$/
   },
   email: {
     type: String,
-    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ // email valide
+    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   },
   secteurActivite: {
     type: String
@@ -43,13 +43,14 @@ const entrepriseSchema = new mongoose.Schema({
     type: String
   },
   taille: {
-    type: Number // nombre d'employés
+    type: Number
   },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
-  }
+  users: [ // Liste de références vers User
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }
+  ]
 });
 
 module.exports = mongoose.model("Entreprise", entrepriseSchema);

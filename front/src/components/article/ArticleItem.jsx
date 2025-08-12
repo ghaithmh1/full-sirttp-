@@ -10,11 +10,12 @@ const ArticleItem = ({ article, onDelete }) => {
           <strong>Model:</strong> {article.model}
         </p>
         <div className="d-flex justify-content-end gap-2">
-          <Link to={`/edit/${article._id}`} className="btn btn-sm btn-outline-primary">
+          <Link to={`/editArticle/${article._id}`} className="btn btn-sm btn-outline-primary">
             Edit
           </Link>
-          <button 
-            onClick={() => onDelete(article._id)} 
+
+          <button
+            onClick={() => onDelete(article._id)}
             className="btn btn-sm btn-outline-danger"
           >
             Delete

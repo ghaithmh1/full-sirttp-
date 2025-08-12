@@ -5,6 +5,10 @@ const carController = require('../controllers/carController');
 // Get all cars
 router.get('/', carController.getCars);
 
+// Get Cars by entrepriseId
+router.get('/entreprise/:entrepriseId', carController.getCarsByEntrepriseId);
+
+
 // Get one car
 router.get('/:id', carController.getCar, (req, res) => {
   res.json(res.car);

@@ -3,9 +3,12 @@ const router = express.Router();
 const articleController = require('../controllers/articleController');
 
 // Get all Articles
-router.get('/', articleController.getArticles);
+router.get('/', articleController.getArticles); // ici renvoie tous les articles sans filtre
 
-// Get one Article
+// Get Articles by entrepriseId
+router.get('/entreprise/:entrepriseId', articleController.getArticlesByEntrepriseId);
+
+// Get one Article by article id
 router.get('/:id', articleController.getArticle, (req, res) => {
   res.json(res.article);
 });

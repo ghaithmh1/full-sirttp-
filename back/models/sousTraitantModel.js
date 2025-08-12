@@ -6,6 +6,11 @@ const sousTraitantSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   phone: String,
   address: String,
+    entrepriseId:{ 
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Entreprise",
+          required: true
+        } 
 }, { timestamps: true });
 
 module.exports = mongoose.model("SousTraitant", sousTraitantSchema);

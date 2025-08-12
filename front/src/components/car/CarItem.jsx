@@ -28,12 +28,10 @@ const CarItem = ({ car, onDelete }) => {
             )}
           </div>
           <div className="d-flex flex-column gap-2">
-            <Link
-              to={`/editCar/${car._id}`}
-              className="btn btn-sm btn-outline-primary"
-            >
-              Edit
-            </Link>
+            
+              <Link to={`/editCar/${car._id}`} className="btn btn-sm btn-outline-primary">
+                        Edit
+                      </Link>
 
             
             <button

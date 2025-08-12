@@ -9,7 +9,12 @@ const carSchema = new mongoose.Schema(
     insurance: { type: String, required: true },
     mileage: { type: Number, required: true },
     lastServiceDate: { type: Date },
-    nextServiceDue: { type: Date }
+    nextServiceDue: { type: Date },
+      entrepriseId:{ 
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Entreprise",
+            required: true
+          } 
   },
   {
     timestamps: true // This will automatically manage createdAt and updatedAt

@@ -19,6 +19,13 @@ const CarForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
+    useEffect(() => {
+    // Récupérer l'ID stocké dans localStorage et l'ajouter à formData
+    const storedId = localStorage.getItem("entrepriseId");
+    if (storedId) {
+      setFormData(prev => ({ ...prev, entrepriseId: storedId }));
+    }
+  }, []);
 
   useEffect(() => {
     if (isEdit) {
@@ -29,10 +36,7 @@ const CarForm = () => {
   const fetchCar = async () => {
     try {
       const { data } = await getCar(id);
-      setFormData({
-        ...data,
-        mileage: data.mileage.toString() // Convert to string for input
-      });
+      setFormData({ ...data, entrepriseId: data.entrepriseId || '' });
     } catch (err) {
       console.error('Error fetching car:', err);
     }

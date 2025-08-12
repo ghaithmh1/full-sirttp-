@@ -1,10 +1,22 @@
 const Car = require('../models/Car');
+const mongoose=require("mongoose")
 
 // Get all cars
 async function getCars(req, res) {
   try {
     const cars = await Car.find();
     res.json(cars);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+async function getCarsByEntrepriseId(req, res) {
+  try {
+    const { entrepriseId } = req.params;
+    const entrepriseObjectId = new mongoose.Types.ObjectId(entrepriseId);
+    const Cars = await Car.find({ entrepriseId: entrepriseObjectId });
+    res.json(Cars);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -29,8 +41,10 @@ async function getCar(req, res, next) {
 // Create car
 async function createCar(req, res) {
    // Validate required fields
+      
+
   if (!req.body.name || !req.body.model || !req.body.serie || 
-      !req.body.registrationCard || !req.body.insurance || !req.body.mileage) {
+      !req.body.registrationCard || !req.body.insurance || !req.body.mileage ||! req.body.entrepriseId) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
@@ -46,7 +60,9 @@ async function createCar(req, res) {
     serie: req.body.serie,
     registrationCard: req.body.registrationCard,
     insurance: req.body.insurance,
-    mileage: req.body.mileage
+    mileage: req.body.mileage,
+    entrepriseId:req.body.entrepriseId,
+
   });
 
     try {
@@ -91,6 +107,7 @@ async function deleteCar(req, res) {
 
 module.exports = {
   getCars,
+  getCarsByEntrepriseId,
   getCar,
   createCar,
   updateCar,
