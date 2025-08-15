@@ -11,19 +11,24 @@ import FournisseurForm from './components/fournisseur/FournisseurForm';
 import ClientManager from "./components/Client/clientManager";
 import FournisseurManager from "./components/Fournisseurs/fournisseurManager";
 import SousTraitantManager from "./components/SousTraitant/sousTraitantManager";
-<<<<<<< HEAD
 import Home from './components/usercomponents/home.jsx';
+import ChoixEntreprise from'./components/entreprise/choixEntreprise.jsx';
+import JoindreEntreprise from'./components/entreprise/JoindreEntreprise.jsx';
 
-=======
->>>>>>> a01438bb3d4ec4f9a311f50901848bae7f35442b
+
 function App() {
   return (
     <BrowserRouter>
+      <div id="modal-root"></div>
       <div className="container py-4">
         <Routes>
-          <Route path="/" element={<Register />} />
+          <Route path="/Register" element={<Register />} />
+
           <Route path="/login" element={<Login />} />
           <Route path="/entreprise" element={<CreateEntreprise />} />
+          <Route path="/joindreEntreprise" element={<JoindreEntreprise />} />
+          <Route path="/ChoixEntreprise" element={<ChoixEntreprise />} />
+
           <Route path="/home" element={<Home />} />
 
 
@@ -50,11 +55,6 @@ function App() {
 
 
         </Routes>
-<<<<<<< HEAD
-
-=======
-        
->>>>>>> a01438bb3d4ec4f9a311f50901848bae7f35442b
       </div>
     </BrowserRouter>
   );

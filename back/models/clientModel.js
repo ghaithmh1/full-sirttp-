@@ -5,7 +5,11 @@ const clientSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  email: { type: String, required: true, unique: true },
+  email: { 
+    type: String, 
+    required: true, 
+    unique: true 
+  },
   phone: String,
   address: String,
   entrepriseId: {
@@ -13,6 +17,8 @@ const clientSchema = new mongoose.Schema({
     ref: "Entreprise",
     required: true
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true 
+});
 
 module.exports = mongoose.model("Client", clientSchema);

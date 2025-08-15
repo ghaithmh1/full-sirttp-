@@ -23,21 +23,16 @@ export default function LoginForm() {
         const data = await res.json();
         console.log("Connexion réussie :", data);
 
-        alert("Connexion réussie !");
-        
-        // Stocker le token et l'ID utilisateur
         localStorage.setItem("token", data.token);
         localStorage.setItem("userId", data._id);
 
-        // Redirection sans mettre l'id dans l'URL
-        navigate("/entreprise");
+        alert("Connexion réussie !");
+        navigate("/home"); // 🔹 redirection directe vers home
       } else {
         const errData = await res.json();
-        console.error("Erreur login :", errData.message || res.statusText);
         alert("Erreur : " + (errData.message || "Une erreur est survenue"));
       }
     } catch (error) {
-      console.error("Erreur réseau :", error);
       alert("Erreur réseau, merci de réessayer plus tard");
     }
   };
@@ -66,8 +61,15 @@ export default function LoginForm() {
         />
       </div>
 
-      <button type="submit" style={{ marginTop: 10 }}>
-        Login
+      <button type="submit" style={{ marginTop: 10 }}>Login</button>
+
+      {/* 🔹 Bouton pour aller à l'inscription */}
+      <button
+        type="button"
+        onClick={() => navigate("/register")}
+        style={{ marginTop: 10, marginLeft: 10 }}
+      >
+        Créer un compte
       </button>
     </form>
   );

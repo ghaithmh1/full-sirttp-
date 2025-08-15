@@ -1,118 +1,118 @@
-const Client = require('../models/clientModel');
+const Depot = require('../models/depot');
 const Activity = require('../models/Activity');
 const { logActivity } = require('../services/activityService');
 
-// Get all clients for current enterprise
-exports.getClients = async (req, res) => {
+// Get all depots for current enterprise
+exports.getDepots = async (req, res) => {
   try {
-    const clients = await Client.find({ entrepriseId: req.user.entrepriseId });
-    res.json({ success: true, data: clients });
+    const depots = await Depot.find({ entrepriseId: req.user.entrepriseId });
+    res.json({ success: true, data: depots });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// Get single client
-exports.getClient = async (req, res) => {
+// Get single depot
+exports.getDepot = async (req, res) => {
   try {
-    const client = await Client.findOne({ 
+    const depot = await Depot.findOne({ 
       _id: req.params.id, 
       entrepriseId: req.user.entrepriseId 
     });
     
-    if (!client) {
-      return res.status(404).json({ success: false, message: 'Client not found' });
+    if (!depot) {
+      return res.status(404).json({ success: false, message: 'Depot not found' });
     }
     
-    res.json({ success: true, data: client });
+    res.json({ success: true, data: depot });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// Create client
-exports.createClient = async (req, res) => {
+// Create depot
+exports.createDepot = async (req, res) => {
   try {
-    const clientData = {
+    const depotData = {
       ...req.body,
       entrepriseId: req.user.entrepriseId
     };
     
-    const client = new Client(clientData);
-    const newClient = await client.save();
+    const depot = new Depot(depotData);
+    const newDepot = await depot.save();
     
     // Log activity
     await logActivity(
       'create', 
-      'Client', 
-      newClient._id, 
+      'Depot', 
+      newDepot._id, 
       req.user.id, 
       req.user.entrepriseId,
-      newClient
+      newDepot
     );
     
-    res.status(201).json({ success: true, data: newClient });
+    res.status(201).json({ success: true, data: newDepot });
   } catch (error) {
     console.error(error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
 
-// Update client
-exports.updateClient = async (req, res) => {
+// Update depot
+exports.updateDepot = async (req, res) => {
   try {
-    const client = await Client.findOneAndUpdate(
+    const depot = await Depot.findOneAndUpdate(
       { _id: req.params.id, entrepriseId: req.user.entrepriseId },
       req.body,
-      { new: true, runValidators: true }
+      { new: true }
     );
     
-    if (!client) {
-      return res.status(404).json({ success: false, message: 'Client not found' });
+    if (!depot) {
+      return res.status(404).json({ success: false, message: 'Depot not found' });
     }
     
     // Log activity
     await logActivity(
       'update', 
-      'Client', 
-      client._id, 
+      'Depot', 
+      depot._id, 
       req.user.id, 
       req.user.entrepriseId,
       req.body
     );
     
-    res.json({ success: true, data: client });
+    res.json({ success: true, data: depot });
   } catch (error) {
     console.error(error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
 
-// Delete client
-exports.deleteClient = async (req, res) => {
+// Delete depot
+exports.deleteDepot = async (req, res) => {
   try {
-    const client = await Client.findOneAndDelete({ 
+    const depot = await Depot.findOneAndDelete({ 
       _id: req.params.id, 
       entrepriseId: req.user.entrepriseId 
     });
     
-    if (!client) {
-      return res.status(404).json({ success: false, message: 'Client not found' });
+    if (!depot) {
+      return res.status(404).json({ success: false, message: 'Depot not found' });
     }
     
     // Log activity
     await logActivity(
       'delete', 
-      'Client', 
-      client._id, 
+      'Depot', 
+      depot._id, 
       req.user.id, 
       req.user.entrepriseId,
-      client
+      depot
     );
     
-    res.json({ success: true, message: 'Client deleted successfully' });
+    res.json({ success: true, message: 'Depot deleted successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server error' });

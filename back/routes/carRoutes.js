@@ -1,26 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const carController = require('../controllers/carController');
+const { protect } = require('../middlewares/authMiddleware');
 
-// Get all cars
-router.get('/', carController.getCars);
+router.get('/', protect(), carController.getCars);
+router.get('/:id', protect(), carController.getCar);
+router.post('/', protect(['admin', 'superadmin']), carController.createCar);
+router.put('/:id', protect(['admin', 'superadmin']), carController.updateCar);
+router.delete('/:id', protect(['admin', 'superadmin']), carController.deleteCar);
 
-// Get Cars by entrepriseId
-router.get('/entreprise/:entrepriseId', carController.getCarsByEntrepriseId);
-
-
-// Get one car
-router.get('/:id', carController.getCar, (req, res) => {
-  res.json(res.car);
-});
-
-// Create car
-router.post('/', carController.createCar);
-
-// Update car
-router.patch('/:id', carController.getCar, carController.updateCar);
-
-// Delete car
-router.delete('/:id', carController.getCar, carController.deleteCar);
-
-module.exports = router;
+module.exports = router;   

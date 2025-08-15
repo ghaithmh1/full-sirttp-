@@ -32,7 +32,7 @@ export default function CreateEntreprise() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:5000/api/entreprise/create", {
+      const res = await axios.post("http://localhost:5000/api/entreprises/create", {
         identifiantFiscal,
         nom,
         adresse,

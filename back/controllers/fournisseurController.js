@@ -1,110 +1,120 @@
-const createHttpError = require("http-errors");
-const Fournisseur = require("../models/fournisseurModel");
-const { default: mongoose } = require("mongoose");
+const Fournisseur = require('../models/fournisseurModel');
+const Activity = require('../models/Activity');
+const { logActivity } = require('../services/activityService');
 
-const addFournisseur = async (req, res, next) => {
+// Get all fournisseurs for current enterprise
+exports.getFournisseurs = async (req, res) => {
   try {
-    const fournisseur = new Fournisseur(req.body);
-    await fournisseur.save();
-    res
-      .status(201)
-      .json({ success: true, message: "Fournisseur created!", data: fournisseur });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getFournisseurById = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      const error = createHttpError(404, "Invalid id!");
-      return next(error);
-    }
-
-    const fournisseur = await Fournisseur.findById(id);
-    if (!fournisseur) {
-      const error = createHttpError(404, "Fournisseur not found!");
-      return next(error);
-    }
-
-    res.status(200).json({ success: true, data: fournisseur });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getFournisseurs = async (req, res, next) => {
-  try {
-  const fournisseurs = await Fournisseur.find();
-    res.status(200).json({ data: fournisseurs });
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-
-const updateFournisseur = async (req, res, next) => {
-  try {
-    const updates = req.body; // Use all fields from body
-    const { id } = req.params;
-
-    console.log("Request body:", req.body);
-    console.log("Fournisseur ID:", id);
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      const error = createHttpError(404, "Invalid id!");
-      return next(error);
-    }
-
-    // Optional: Prevent updating certain fields like _id
-    delete updates._id;
-
-    if (Object.keys(updates).length === 0) {
-      return next(createHttpError(400, "No fields provided for update"));
-    }
-
-    const fournisseur = await Fournisseur.findByIdAndUpdate(
-      id,
-      updates,
-      { new: true, runValidators: true }
-    );
-
-    if (!fournisseur) {
-      const error = createHttpError(404, "Fournisseur not found!");
-      return next(error);
-    }
-
-    res.status(200).json({ success: true, message: "Fournisseur updated", data: fournisseur });
+    const fournisseurs = await Fournisseur.find({ entrepriseId: req.user.entrepriseId });
+    res.json({ success: true, data: fournisseurs });
   } catch (error) {
     console.error(error);
-    next(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-
-const deleteFournisseur = async (req, res, next) => {
+// Get single fournisseur
+exports.getFournisseur = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return next(createHttpError(404, "Invalid id!"));
-    }
-
-    const fournisseur = await Fournisseur.findByIdAndDelete(id);
+    const fournisseur = await Fournisseur.findOne({ 
+      _id: req.params.id, 
+      entrepriseId: req.user.entrepriseId 
+    });
+    
     if (!fournisseur) {
-      return next(createHttpError(404, "Fournisseur not found!"));
+      return res.status(404).json({ success: false, message: 'Fournisseur not found' });
     }
-
-    res
-      .status(200)
-      .json({ success: true, message: "Fournisseur deleted successfully" });
+    
+    res.json({ success: true, data: fournisseur });
   } catch (error) {
-    next(error);
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
+// Create fournisseur
+exports.createFournisseur = async (req, res) => {
+  try {
+    const fournisseurData = {
+      ...req.body,
+      entrepriseId: req.user.entrepriseId
+    };
+    
+    const fournisseur = new Fournisseur(fournisseurData);
+    const newFournisseur = await fournisseur.save();
+    
+    // Log activity
+    await logActivity(
+      'create', 
+      'Fournisseur', 
+      newFournisseur._id, 
+      req.user.id, 
+      req.user.entrepriseId,
+      newFournisseur
+    );
+    
+    res.status(201).json({ success: true, data: newFournisseur });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
 
-module.exports = { addFournisseur, getFournisseurById, getFournisseurs, updateFournisseur, deleteFournisseur };
+// Update fournisseur
+exports.updateFournisseur = async (req, res) => {
+  try {
+    const fournisseur = await Fournisseur.findOneAndUpdate(
+      { _id: req.params.id, entrepriseId: req.user.entrepriseId },
+      req.body,
+      { new: true, runValidators: true }
+    );
+    
+    if (!fournisseur) {
+      return res.status(404).json({ success: false, message: 'Fournisseur not found' });
+    }
+    
+    // Log activity
+    await logActivity(
+      'update', 
+      'Fournisseur', 
+      fournisseur._id, 
+      req.user.id, 
+      req.user.entrepriseId,
+      req.body
+    );
+    
+    res.json({ success: true, data: fournisseur });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// Delete fournisseur
+exports.deleteFournisseur = async (req, res) => {
+  try {
+    const fournisseur = await Fournisseur.findOneAndDelete({ 
+      _id: req.params.id, 
+      entrepriseId: req.user.entrepriseId 
+    });
+    
+    if (!fournisseur) {
+      return res.status(404).json({ success: false, message: 'Fournisseur not found' });
+    }
+    
+    // Log activity
+    await logActivity(
+      'delete', 
+      'Fournisseur', 
+      fournisseur._id, 
+      req.user.id, 
+      req.user.entrepriseId,
+      fournisseur
+    );
+    
+    res.json({ success: true, message: 'Fournisseur deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

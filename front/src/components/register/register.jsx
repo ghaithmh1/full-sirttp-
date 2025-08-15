@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import ChoixEntreprise from "../entreprise/choixEntreprise";
 
 export default function RegisterForm() {
   const [nom, setNom] = useState("");
@@ -6,117 +8,66 @@ export default function RegisterForm() {
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [num, setNum] = useState("");
+  const [showChoix, setShowChoix] = useState(false); // 🔹 État pour afficher la modale
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    const payload = { nom, prenom, email, pwd, num };
 
-  const payload = { nom, prenom, email, pwd, num };
-  console.log("Envoi inscription :", payload);
-
-  try {
-    const res1 = await fetch("http://localhost:5000/api/user/checkEmail", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-
-    if (res1.ok) {
-      console.log("Email utilisé");
-      alert("Cet email est déjà utilisé.");
-      return; // arrêter la fonction, on ne continue pas l'inscription
-    } else if (res1.status === 404) {
-      // email non trouvé, on peut continuer l'inscription
-      const res2 = await fetch("http://localhost:5000/api/user/register", {
+    try {
+      const res1 = await fetch("http://localhost:5000/api/users/checkEmail", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ email }),
       });
 
-      if (res2.ok) {
-        const data = await res2.json();
-        console.log("Inscription réussie :", data);
-        alert("Inscription réussie !");
-        // reset form
-        setNom("");
-        setPrenom("");
-        setEmail("");
-        setPwd("");
-        setNum("");
-      } else {
-        const errData = await res2.json();
-        console.error("Erreur inscription :", errData.message || res2.statusText);
-        alert("Erreur : " + (errData.message || "Une erreur est survenue"));
-      }
-    } else {
-      // autre erreur (ex: 400)
-      const errData = await res1.json();
-      alert("Erreur : " + (errData.message || "Erreur lors de la vérification de l'email"));
-    }
-  } catch (error) {
-    console.error("Erreur réseau :", error);
-    alert("Erreur réseau, merci de réessayer plus tard");
-  }
-};
+      if (res1.ok) {
+        alert("Cet email est déjà utilisé.");
+        return;
+      } else if (res1.status === 404) {
+        const res2 = await fetch("http://localhost:5000/api/users/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
+        if (res2.ok) {
+          const data = await res2.json();
+          alert("Inscription réussie !");
+          localStorage.setItem("userId", data._id);
+
+          console.log("Setting showChoix to true");
+          setShowChoix(true);
+          navigate("/ChoixEntreprise");
+
+        } else {
+          const errData = await res2.json();
+          alert("Erreur : " + (errData.message || "Une erreur est survenue"));
+        }
+      } else {
+        alert("Erreur lors de la vérification de l'email");
+      }
+    } catch (error) {
+      alert("Erreur réseau, merci de réessayer plus tard");
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 400, margin: "auto" }}>
-      <h2>Register</h2>
+    <>
+      <form onSubmit={handleSubmit} style={{ maxWidth: 400, margin: "auto" }}>
+        <h2>Register</h2>
 
-      <div>
-        <label>Nom</label>
-        <input
-          type="text"
-          value={nom}
-          onChange={(e) => setNom(e.target.value)}
-          required
-        />
-      </div>
+        <input type="text" placeholder="Nom" value={nom} onChange={(e) => setNom(e.target.value)} required />
+        <input type="text" placeholder="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} required />
+        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input type="password" placeholder="Mot de passe" value={pwd} onChange={(e) => setPwd(e.target.value)} required />
+        <input type="text" placeholder="Numéro" value={num} onChange={(e) => setNum(e.target.value)} required />
 
-      <div>
-        <label>Prénom</label>
-        <input
-          type="text"
-          value={prenom}
-          onChange={(e) => setPrenom(e.target.value)}
-          required
-        />
-      </div>
+        <button type="submit" style={{ marginTop: 10 }}>S'inscrire</button>
+      </form>
 
-      <div>
-        <label>Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-
-      <div>
-        <label>Mot de passe</label>
-        <input
-          type="password"
-          value={pwd}
-          onChange={(e) => setPwd(e.target.value)}
-          required
-        />
-      </div>
-
-      <div>
-        <label>Numéro</label>
-        <input
-          type="text"
-          value={num}
-          onChange={(e) => setNum(e.target.value)}
-          placeholder="Ex: 21234567"
-          required
-        />
-      </div>
-
-      <button type="submit" style={{ marginTop: 10 }}>
-        S'inscrire
-      </button>
-    </form>
+      {/* 🔹 Affichage de la modale si inscription réussie */}
+    </>
   );
 }

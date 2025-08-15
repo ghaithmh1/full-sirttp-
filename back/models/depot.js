@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 
-const articleSchema = new mongoose.Schema(
+const depotSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    model: { type: String, required: true },
+    location : { type: String, required: true },
+    num: { type: String },
     entrepriseId: { 
       type: mongoose.Schema.Types.ObjectId,
       ref: "Entreprise",
@@ -12,4 +13,4 @@ const articleSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('Article', articleSchema);
+module.exports = mongoose.model('Depot', depotSchema);
