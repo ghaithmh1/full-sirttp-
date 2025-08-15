@@ -1,131 +1,164 @@
-const crypto = require("crypto");
-require("dotenv").config();
-const asyncHandler = require("express-async-handler");
-const User = require("../models/userModel");
+const User = require('../models/userModel');
+const Activity = require('../models/Activity');
+const { logActivity } = require('../services/activityService');
+const jwt = require('jsonwebtoken');
 
-const algorithm = "aes-256-cbc";
-
-// Crypter mot de passe
-function encrypt(text) {
-  const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
-  const IV = Buffer.from(process.env.ENCRYPTION_IV, "hex");
-  const cipher = crypto.createCipheriv(algorithm, KEY, IV);
-  let encrypted = cipher.update(text, "utf8", "hex");
-  encrypted += cipher.final("hex");
-  return encrypted;
-}
-
-// Décrypter mot de passe
-function decrypt(encryptedText) {
-  const KEY = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
-  const IV = Buffer.from(process.env.ENCRYPTION_IV, "hex");
-  const decipher = crypto.createDecipheriv(algorithm, KEY, IV);
-  let decrypted = decipher.update(encryptedText, "hex", "utf8");
-  decrypted += decipher.final("utf8");
-  return decrypted;
-}
-
-module.exports.register = asyncHandler(async (req, res) => {
+// Register user
+exports.register = async (req, res) => {
   try {
     const { nom, prenom, email, pwd, num } = req.body;
-
-    if (!nom) return res.status(400).json({ message: "Vérifier votre nom" });
-    if (!prenom) return res.status(400).json({ message: "Vérifier votre prénom" });
-
-    // Vérifier email valide
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
-      return res.status(400).json({ message: "Email invalide" });
+    
+    // Validate input
+    if (!nom || !prenom || !email || !pwd || !num) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
     }
-
-    if (!pwd) return res.status(400).json({ message: "Vérifier votre mot de passe" });
-
-    // Vérifier numéro : commence par 2, 5 ou 9 et fait 8 chiffres
-    const numRegex = /^[259]\d{7}$/;
-    if (!num || !numRegex.test(num)) {
-      return res.status(400).json({ message: "Numéro invalide (8 chiffres et commence par 2, 5 ou 9)" });
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
     }
-
+    
+    if (!/^[259]\d{7}$/.test(num)) {   
+      return res.status(400).json({ success: false, message: 'Invalid phone number' });
+    }
+    
+    // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email déjà utilisé" });
+      return res.status(400).json({ success: false, message: 'Email already exists' });
     }
-
-    const newpass = encrypt(pwd);
-    const newuser = new User({
-      nom,
-      prenom,
-      email,
-      num,
-      pwd: newpass,
+    
+    // Create user
+    const user = new User({ nom, prenom, email, pwd, num });
+    const newUser = await user.save();
+    
+    // Generate token
+    const token = newUser.generateAuthToken();
+    
+    res.status(201).json({ 
+      success: true, 
+      data: {
+        _id: newUser._id,
+        email: newUser.email,
+        token
+      }
     });
-
-    await newuser.save();
-
-    res.status(201).json({
-      message: "Utilisateur créé avec succès",
-      _id: newuser._id,
-      email,
-    });
-  } catch (err) {
-    console.error("Erreur inscription :", err);
-    res.status(500).json({ message: "Erreur serveur" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
-});
-module.exports.login = asyncHandler(async (req, res) => {
-  try{
-  const { email, pwd } = req.body;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+};
 
-  // Vérifier email valide
-  if (!email || !emailRegex.test(email)) {
-    return res.status(400).json({ message: "Email invalide" });
-  }
-
-  // Vérifier mot de passe présent
-  if (!pwd) {
-    return res.status(400).json({ message: "Vérifier votre mot de passe" });
-  }
-
-  // Chercher l'utilisateur
-  const userExiste = await User.findOne({ email });
-  if (!userExiste) {
-    return res.status(400).json({ message: "Utilisateur non trouvé" });
-  }
-
-  // Vérifier mot de passe
-  const cryptedpass = encrypt(pwd);
-  if (cryptedpass !== userExiste.pwd) {
-    return res.status(400).json({ message: "Mot de passe incorrect" });
-  }
-
-  // Réponse OK
-  return res.status(200).json({
-    _id: userExiste._id,
-    email: userExiste.email,
-    token: userExiste.generateAuthToken(),
-    role: userExiste.role,
-  });}
-  catch (err) {
-    console.error("Erreur inscription :", err);
-    res.status(500).json({ message: "Erreur serveur" });}
-  
-});
-module.exports.checkEmail=asyncHandler(async(req,res)=>{
+// Login user
+exports.login = async (req, res) => {
   try {
-    const {email}=req.body;
-    if (!email) {
-            return res.status(400).json({ message: "Email requis" });
+    const { email, pwd } = req.body;
+    
+    // Validate input
+    if (!email || !pwd) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
-    const user=await User.findOne({email});
+    
+    // Find user   
+    const user = await User.findOne({ email }).select('+pwd');
     if (!user) {
-      return res.status(404).json({ message: "Email non trouvé" });
-    } else {
-      return res.status(200).json({ message: "Email trouvé" });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-  } catch (err) {
-    console.error("Erreur checkEmail :", err);
-    res.status(500).json({ message: "Erreur serveur" });
+    
+    // Check password
+    const isMatch = await user.comparePassword(pwd);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+    
+    // Generate token
+    const token = user.generateAuthToken();
+    
+    res.json({ 
+      success: true, 
+      data: {
+        _id: user._id,
+        email: user.email,
+        role: user.role,
+        entrepriseId: user.entrepriseId,
+        token
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
+};
 
-});
+// Get all users for current enterprise
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.find({ entrepriseId: req.user.entrepriseId });
+    res.json({ success: true, data: users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// Update user
+exports.updateUser = async (req, res) => {
+  try {
+    const user = await User.findOneAndUpdate(
+      { _id: req.params.id, entrepriseId: req.user.entrepriseId },
+      req.body,
+      { new: true, runValidators: true }
+    );
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    // Log activity
+    await logActivity(
+      'update', 
+      'User', 
+      user._id, 
+      req.user.id, 
+      req.user.entrepriseId,
+      req.body
+    );
+    
+    res.json({ success: true, data: user });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// Delete user
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findOneAndDelete({ 
+      _id: req.params.id, 
+      entrepriseId: req.user.entrepriseId 
+    });
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    // Log activity
+    await logActivity(
+      'delete', 
+      'User', 
+      user._id, 
+      req.user.id, 
+      req.user.entrepriseId,
+      user
+    );
+    
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

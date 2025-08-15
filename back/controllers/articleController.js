@@ -1,5 +1,8 @@
 const Article = require('../models/Article');
 const mongoose=require("mongoose")
+
+
+
 async function getArticles(req, res) {
   try {
       const Articles = await Article.find();

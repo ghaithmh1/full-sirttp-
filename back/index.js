@@ -45,8 +45,8 @@ io.on("connection", (socket) => {
 });
 
 // Routes
-const userRoutes = require("./routes/userRoute");
-const entrepriseRoutes = require("./routes/entrepriseRoutes");
+const userRoutes = require("./routes/userRoutes");
+const entrepriseRoutes = require("./routes/entrepriseRoutes");   
 const carRoutes = require('./routes/carRoutes'); 
 const articleRoutes = require('./routes/articleRoutes'); 
 const clientRoutes = require("./routes/clientRoutes");
@@ -63,13 +63,15 @@ app.get("/", (req, res) => {
 
 
 // Mount routes:
-app.use("/api/user", userRoutes);
-app.use("/api/entreprise",entrepriseRoutes)
-app.use('/api/cars', carRoutes);
-app.use('/api/articles', articleRoutes);
-app.use("/api/clients", clientRoutes);
-app.use("/api/fournisseurs", fournisseurRoutes);
-app.use("/api/sousTraitants", sousTraitantRoutes);
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/cars', require('./routes/carRoutes'));
+app.use('/api/depots', require('./routes/depotRoutes'));
+app.use('/api/clients', require('./routes/clientRoutes'));
+app.use('/api/fournisseurs', require('./routes/fournisseurRoutes'));
+app.use('/api/sous-traitants', require('./routes/sousTraitantRoutes'));
+app.use('/api/activities', require('./routes/activityRoutes'));
+app.use('/api/entreprises', require('./routes/entrepriseRoutes'));
 
 
 // Basic route for testing   

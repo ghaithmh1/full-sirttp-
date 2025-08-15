@@ -1,115 +1,120 @@
 const Car = require('../models/Car');
-const mongoose=require("mongoose")
+const Activity = require('../models/Activity');
+const { logActivity } = require('../services/activityService');
 
-// Get all cars
-async function getCars(req, res) {
+// Get all cars for current enterprise
+exports.getCars = async (req, res) => {
   try {
-    const cars = await Car.find();
-    res.json(cars);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    const cars = await Car.find({ entrepriseId: req.user.entrepriseId });
+    res.json({ success: true, data: cars });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
-}
+};
 
-async function getCarsByEntrepriseId(req, res) {
+// Get single car
+exports.getCar = async (req, res) => {
   try {
-    const { entrepriseId } = req.params;
-    const entrepriseObjectId = new mongoose.Types.ObjectId(entrepriseId);
-    const Cars = await Car.find({ entrepriseId: entrepriseObjectId });
-    res.json(Cars);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-}
-
-// Get one car
-async function getCar(req, res, next) {
-  let car;
-  try {
-    car = await Car.findById(req.params.id);
-    if (car == null) {
-      return res.status(404).json({ message: 'Cannot find car' });
+    const car = await Car.findOne({ 
+      _id: req.params.id, 
+      entrepriseId: req.user.entrepriseId 
+    });
+    
+    if (!car) {
+      return res.status(404).json({ success: false, message: 'Car not found' });
     }
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+    
+    res.json({ success: true, data: car });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
-
-  res.car = car;
-  next();
-}
+};
 
 // Create car
-async function createCar(req, res) {
-   // Validate required fields
-      
-
-  if (!req.body.name || !req.body.model || !req.body.serie || 
-      !req.body.registrationCard || !req.body.insurance || !req.body.mileage ||! req.body.entrepriseId) {
-    return res.status(400).json({ message: 'All fields are required' });
-  }
-
-  // Validate mileage is a number
-  if (isNaN(req.body.mileage)) {
-    return res.status(400).json({ message: 'Mileage must be a number' });
-  }
-
-
-  const car = new Car({
-    name: req.body.name,
-    model: req.body.model,
-    serie: req.body.serie,
-    registrationCard: req.body.registrationCard,
-    insurance: req.body.insurance,
-    mileage: req.body.mileage,
-    entrepriseId:req.body.entrepriseId,
-
-  });
-
-    try {
+exports.createCar = async (req, res) => {
+  try {
+    const carData = {
+      ...req.body,
+      entrepriseId: req.user.entrepriseId
+    };
+    
+    const car = new Car(carData);
     const newCar = await car.save();
-    res.status(201).json(newCar);
-  } catch (err) {
-    res.status(400).json({ 
-      message: err.message,
-      errors: err.errors // Include validation errors if using Mongoose validation
-    });
+    
+    // Log activity
+    await logActivity(
+      'create', 
+      'Car', 
+      newCar._id, 
+      req.user.id, 
+      req.user.entrepriseId,
+      newCar
+    );
+    
+    res.status(201).json({ success: true, data: newCar });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ success: false, message: error.message });
   }
-}
+};
 
 // Update car
-async function updateCar(req, res) {
-  if (req.body.name != null) res.car.name = req.body.name;
-  if (req.body.model != null) res.car.model = req.body.model;
-  if (req.body.serie != null) res.car.serie = req.body.serie;
-  if (req.body.registrationCard != null) res.car.registrationCard = req.body.registrationCard;
-  if (req.body.insurance != null) res.car.insurance = req.body.insurance;
-  if (req.body.mileage != null) res.car.mileage = req.body.mileage;
-  if (req.body.lastServiceDate != null) res.car.lastServiceDate = req.body.lastServiceDate;
-  if (req.body.nextServiceDue != null) res.car.nextServiceDue = req.body.nextServiceDue;
-
+exports.updateCar = async (req, res) => {
   try {
-    const updatedCar = await res.car.save();
-    res.json(updatedCar);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    const car = await Car.findOneAndUpdate(
+      { _id: req.params.id, entrepriseId: req.user.entrepriseId },
+      req.body,
+      { new: true, runValidators: true }
+    );
+    
+    if (!car) {
+      return res.status(404).json({ success: false, message: 'Car not found' });
+    }
+    
+    // Log activity
+    await logActivity(
+      'update', 
+      'Car', 
+      car._id, 
+      req.user.id, 
+      req.user.entrepriseId,
+      req.body
+    );
+    
+    res.json({ success: true, data: car });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ success: false, message: error.message });
   }
-}
+};
 
 // Delete car
-async function deleteCar(req, res) {
+exports.deleteCar = async (req, res) => {
   try {
-    await res.car.deleteOne();
-    res.json({ message: 'Deleted Car' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    const car = await Car.findOneAndDelete({ 
+      _id: req.params.id, 
+      entrepriseId: req.user.entrepriseId 
+    });
+    
+    if (!car) {
+      return res.status(404).json({ success: false, message: 'Car not found' });
+    }
+    
+    // Log activity
+    await logActivity(
+      'delete', 
+      'Car', 
+      car._id, 
+      req.user.id, 
+      req.user.entrepriseId,
+      car
+    );
+    
+    res.json({ success: true, message: 'Car deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
-}
-
-module.exports = {
-  getCars,
-  getCarsByEntrepriseId,
-  getCar,
-  createCar,
-  updateCar,
-  deleteCar
 };

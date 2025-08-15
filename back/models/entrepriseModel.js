@@ -4,13 +4,11 @@ const entrepriseSchema = new mongoose.Schema({
   identifiantFiscal: {
     type: String,
     required: true,
-    unique: true,
-    trim: true
+    unique: true
   },
   nom: {
     type: String,
-    required: true,
-    trim: true
+    required: true
   },
   adresse: {
     type: String,
@@ -20,9 +18,7 @@ const entrepriseSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  codePostal: {
-    type: String
-  },
+  codePostal: String,
   telephone: {
     type: String,
     required: true,
@@ -32,25 +28,32 @@ const entrepriseSchema = new mongoose.Schema({
     type: String,
     match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   },
-  secteurActivite: {
-    type: String
-  },
+  secteurActivite: String,
   dateCreation: {
     type: Date,
     default: Date.now
   },
-  description: {
-    type: String
+  description: String,
+  taille: String,
+  users: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  taille: {
-    type: Number
-  },
-  users: [ // Liste de références vers User
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
-    }
-  ]
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
+}, {
+  timestamps: true
 });
+
+// Indexes
+entrepriseSchema.index({ identifiantFiscal: 1 }, { unique: true });
+entrepriseSchema.index({ createdBy: 1 });
 
 module.exports = mongoose.model("Entreprise", entrepriseSchema);
