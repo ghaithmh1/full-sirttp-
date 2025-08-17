@@ -14,7 +14,9 @@ import SousTraitantManager from "./components/SousTraitant/sousTraitantManager";
 import Home from './components/usercomponents/home.jsx';
 import ChoixEntreprise from'./components/entreprise/choixEntreprise.jsx';
 import JoindreEntreprise from'./components/entreprise/JoindreEntreprise.jsx';
-
+import ProduitManager from './components/Produit/produitManager.jsx';
+import DemandePrixManager from './components/DemandePrix/demandePrixManager.jsx';
+import BonCommandeManager from './components/BonCommande/bonCommandeManager.jsx';
 
 function App() {
   return (
@@ -52,6 +54,9 @@ function App() {
           <Route path="/clients" element={<ClientManager />} />
           <Route path="/fournisseurs" element={<FournisseurManager />} />
           <Route path="/sousTraitants" element={<SousTraitantManager />} />
+          <Route path="/produits" element={<ProduitManager />} />
+          <Route path="/demandesPrix" element={<DemandePrixManager/>} />
+          <Route path="/bonsCommande" element={<BonCommandeManager/>} />
 
 
         </Routes>

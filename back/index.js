@@ -52,7 +52,9 @@ const articleRoutes = require('./routes/articleRoutes');
 const clientRoutes = require("./routes/clientRoutes");
 const fournisseurRoutes = require("./routes/fournisseurRoutes");
 const sousTraitantRoutes = require("./routes/sousTraitantRoutes");
-
+const produitRoutes = require("./routes/produitRoutes");
+const demandePrixRoutes = require("./routes/demandePrixRoutes");
+const bonCommandeRoutes = require("./routes/bonCommandeRoutes");
 
 // Root route:
 app.get("/", (req, res) => {
@@ -71,7 +73,9 @@ app.use('/api/fournisseurs', require('./routes/fournisseurRoutes'));
 app.use('/api/sous-traitants', require('./routes/sousTraitantRoutes'));
 app.use('/api/activities', require('./routes/activityRoutes'));
 app.use('/api/entreprises', require('./routes/entrepriseRoutes'));
-
+app.use("/api/produits", produitRoutes);
+app.use("/api/demandePrix", demandePrixRoutes);
+app.use("/api/bonCommandes", bonCommandeRoutes);
 
 // Basic route for testing   
 app.get('/', (req, res) => {
