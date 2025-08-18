@@ -13,7 +13,7 @@ export default function LoginForm() {
     console.log("Envoi login :", payload);
 
     try {
-      const res = await fetch("http://localhost:5000/api/user/login", {
+      const res = await fetch("http://localhost:5000/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -23,8 +23,14 @@ export default function LoginForm() {
         const data = await res.json();
         console.log("Connexion réussie :", data);
 
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userId", data._id);
+        localStorage.setItem("token", data.data.token);
+
+        localStorage.setItem("userId", data.data._id);
+        localStorage.setItem("entrepriseId", data.data.entrepriseId);
+
+        console.log("user id from local storage :",data.data._id );
+
+        console.log("entreprise id from local storage :",data.data.entrepriseId );
 
         alert("Connexion réussie !");
         navigate("/home"); // 🔹 redirection directe vers home
@@ -33,6 +39,7 @@ export default function LoginForm() {
         alert("Erreur : " + (errData.message || "Une erreur est survenue"));
       }
     } catch (error) {
+      console.error("Erreur réseau :", error);
       alert("Erreur réseau, merci de réessayer plus tard");
     }
   };

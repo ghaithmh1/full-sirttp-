@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 
+
 const Home = () => {
   const [entrepriseId, setEntrepriseId] = useState("");
 
@@ -16,7 +17,11 @@ const Home = () => {
     <div style={{ padding: "20px" }}>
       <h1>Page d'accueil</h1>
       {entrepriseId ? (
-        <p>ID de l'entreprise : <strong>{entrepriseId}</strong></p>
+        <div>
+          <p>ID de l'entreprise : <strong>{entrepriseId}</strong></p>
+          
+          
+        </div>
       ) : (
         <p>Aucun ID d'entreprise trouvé dans le localStorage.</p>
       )}

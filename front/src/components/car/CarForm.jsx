@@ -11,7 +11,8 @@ const CarForm = () => {
     insurance: '',
     mileage: '',
     lastServiceDate: '',
-    nextServiceDue: ''
+    nextServiceDue: '',
+    entrepriseId: ''
   });
   
   const [errors, setErrors] = useState({});
@@ -19,26 +20,54 @@ const CarForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
-    useEffect(() => {
-    // Récupérer l'ID stocké dans localStorage et l'ajouter à formData
+  
+  useEffect(() => {
+    // Check authentication
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login first');
+      navigate('/login');
+      return;
+    }
+    
+    // Set entrepriseId
     const storedId = localStorage.getItem("entrepriseId");
     if (storedId) {
       setFormData(prev => ({ ...prev, entrepriseId: storedId }));
     }
-  }, []);
-
-  useEffect(() => {
-    if (isEdit) {
-      fetchCar();
-    }
-  }, [id]);
+    
+    // Fetch car data if editing
+    if (isEdit) fetchCar();
+  }, [id, navigate, isEdit]);
 
   const fetchCar = async () => {
     try {
       const { data } = await getCar(id);
-      setFormData({ ...data, entrepriseId: data.entrepriseId || '' });
+      
+      // Format dates for input fields
+      const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+      };
+      
+      setFormData({
+        name: data.name || '',
+        model: data.model || '',
+        serie: data.serie || '',
+        registrationCard: data.registrationCard || '',
+        insurance: data.insurance || '',
+        mileage: data.mileage ? String(data.mileage) : '',
+        lastServiceDate: formatDate(data.lastServiceDate),
+        nextServiceDue: formatDate(data.nextServiceDue),
+        entrepriseId: data.entrepriseId || localStorage.getItem("entrepriseId") || ''
+      });
     } catch (err) {
       console.error('Error fetching car:', err);
+      if (err.response?.status === 404) {
+        alert('Car not found');
+        navigate('/car');
+      }
     }
   };
 
@@ -63,6 +92,7 @@ const CarForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
     // Clear error when field changes
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -90,10 +120,30 @@ const CarForm = () => {
       navigate('/car');
     } catch (err) {
       console.error('Error saving car:', err);
-      if (err.response?.data?.errors) {
-        setErrors(err.response.data.errors);
+      
+      // Detailed error handling
+      if (err.response) {
+        // Server responded with error status
+        if (err.response.status === 401) {
+          alert('Session expired. Please login again.');
+          localStorage.removeItem('token');
+          navigate('/login');
+        } else if (err.response.status === 403) {
+          alert('You do not have permission to perform this action');
+        } else if (err.response.status === 404) {
+          alert('Car not found');
+          navigate('/car');
+        } else if (err.response.data?.errors) {
+          setErrors(err.response.data.errors);
+        } else {
+          alert(err.response.data?.message || 'Failed to save car');
+        }
+      } else if (err.request) {
+        // Request was made but no response
+        alert('Network error. Please check your connection.');
       } else {
-        alert(err.response?.data?.message || 'Failed to save car');
+        // Other errors
+        alert(err.message || 'An unexpected error occurred');
       }
     } finally {
       setIsSubmitting(false);
@@ -187,6 +237,30 @@ const CarForm = () => {
             min="0"
           />
           {errors.mileage && <div className="invalid-feedback">{errors.mileage}</div>}
+        </div>
+        
+        {/* Last Service Date */}
+        <div className="mb-3">
+          <label className="form-label">Last Service Date</label>
+          <input
+            type="date"
+            name="lastServiceDate"
+            value={formData.lastServiceDate}
+            onChange={handleChange}
+            className="form-control"
+          />
+        </div>
+        
+        {/* Next Service Due */}
+        <div className="mb-3">
+          <label className="form-label">Next Service Due</label>
+          <input
+            type="date"
+            name="nextServiceDue"
+            value={formData.nextServiceDue}
+            onChange={handleChange}
+            className="form-control"
+          />
         </div>
         
         <div className="d-flex gap-2">

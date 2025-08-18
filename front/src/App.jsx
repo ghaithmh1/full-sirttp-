@@ -14,13 +14,14 @@ import SousTraitantManager from "./components/SousTraitant/sousTraitantManager";
 import Home from './components/usercomponents/home.jsx';
 import ChoixEntreprise from'./components/entreprise/choixEntreprise.jsx';
 import JoindreEntreprise from'./components/entreprise/JoindreEntreprise.jsx';
-
+import Navbar from './components/usercomponents/navbar.jsx';
 
 function App() {
   return (
     <BrowserRouter>
       <div id="modal-root"></div>
       <div className="container py-4">
+        <Navbar />
         <Routes>
           <Route path="/Register" element={<Register />} />
 

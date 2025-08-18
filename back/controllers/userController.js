@@ -98,6 +98,8 @@ exports.getUsers = async (req, res) => {
   try {
     const users = await User.find({ entrepriseId: req.user.entrepriseId });
     res.json({ success: true, data: users });
+    // Generate token
+    const token = User.generateAuthToken();
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server error' });

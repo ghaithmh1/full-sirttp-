@@ -1,40 +1,36 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getCarsByEntrepriseId, deleteCar } from '../../services/carApi';
+import { getCars, deleteCar } from '../../services/carApi';
 import CarItem from './CarItem';
 
 const CarList = () => {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [entrepriseId, setEntrepriseId] = useState(null);
 
-    useEffect(() => {
-    const storedId = localStorage.getItem("entrepriseId");
-    if (storedId) {
-      setEntrepriseId(storedId);
-    } else {
-      setError('Entreprise ID not found in localStorage');
-      setLoading(false);
-    }
+  // Fetch cars on mount
+  useEffect(() => {
+    fetchCars();
   }, []);
-    useEffect(() => {
-    if (entrepriseId) {
-      fetchCars(entrepriseId);
-    }
-  }, [entrepriseId]);
 
-
-  const fetchCars = async (id) => {
+  const fetchCars = async () => {
     try {
       setLoading(true);
-      const { data } = await getCarsByEntrepriseId(id); // Direct array response
-      setCars(data);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No authentication token found');
+        setLoading(false);
+        return;
+      }
+
+      const { data } = await getCars(token);
+      // Backend sends: { success: true, data: [...] }
+      setCars(data.data || []);
       setError(null);
     } catch (err) {
-      setError('Failed to load cars. Is the backend running?');
       console.error('Fetch error:', err);
-      setCars([]); // Ensure cars is always an array
+      setError('Failed to load cars. Is the backend running?');
+      setCars([]);
     } finally {
       setLoading(false);
     }
@@ -43,8 +39,9 @@ const CarList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this car?')) {
       try {
-        await deleteCar(id);
-        fetchCars();
+        const token = localStorage.getItem('token');
+        await deleteCar(id, token);
+        fetchCars(); // refresh list after deletion
       } catch (err) {
         console.error('Delete failed:', err);
       }
