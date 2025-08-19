@@ -14,32 +14,49 @@ const FournisseurList = () => {
 
   const fetchFournisseurs = async () => {
     try {
+      setLoading(true);
       const { data } = await getFournisseurs();
-      setFournisseurs(data.data || []); // Handle both array and object responses
+      setFournisseurs(data.data || []);
       setError(null);
     } catch (err) {
-      setError('Failed to load suppliers. Is the backend running?');
       console.error('Fetch error:', err);
-      setFournisseurs([]);
+      setError(err.response?.data?.message || 'Failed to load suppliers. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this supplier?')) {
-      try {
-        await deleteFournisseur(id);
-        fetchFournisseurs();
-      } catch (err) {
-        console.error('Delete failed:', err);
-      }
+    if (!window.confirm('Are you sure you want to delete this supplier?')) return;
+    
+    try {
+      setLoading(true);
+      await deleteFournisseur(id);
+      fetchFournisseurs();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setError(err.response?.data?.message || 'Failed to delete supplier. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) return <div className="text-center my-4">Loading suppliers...</div>;
-  if (error) return <div className="alert alert-danger my-4">{error}</div>;
-  if (!fournisseurs.length) return <div className="alert alert-info my-4">No suppliers found</div>;
+  if (loading) return (
+    <div className="d-flex justify-content-center my-5">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="container mt-4">
+      <div className="alert alert-danger">{error}</div>
+      <button className="btn btn-primary" onClick={fetchFournisseurs}>
+        Retry
+      </button>
+    </div>
+  );
 
   return (
     <div className="container mt-4">
@@ -48,22 +65,35 @@ const FournisseurList = () => {
           <i className="bi bi-truck me-2"></i>
           Suppliers
         </h2>
-        <Link to="/create" className="btn btn-primary">
+        <Link to="/createFournisseur" className="btn btn-primary">
           <i className="bi bi-plus-lg me-2"></i>
           Add Supplier
         </Link>
       </div>
 
-      <div className="row">
-        {fournisseurs.map((fournisseur) => (
-          <div key={fournisseur._id} className="col-md-6">
-            <FournisseurItem 
-              fournisseur={fournisseur} 
-              onDelete={handleDelete} 
-            />
+      {fournisseurs.length === 0 ? (
+        <div className="card">
+          <div className="card-body text-center py-5">
+            <i className="bi bi-inbox" style={{ fontSize: '3rem', opacity: 0.5 }}></i>
+            <h5 className="mt-3">No suppliers found</h5>
+            <p className="text-muted">Start by adding your first supplier</p>
+            <Link to="/create/Fournisseur" className="btn btn-primary mt-2">
+              Add Supplier
+            </Link>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="row row-cols-1 row-cols-md-2 g-4">
+          {fournisseurs.map((fournisseur) => (
+            <div key={fournisseur._id} className="col">
+              <FournisseurItem 
+                fournisseur={fournisseur} 
+                onDelete={handleDelete} 
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -32,11 +32,11 @@ const Navbar = () => {
       </div>
           <Link to="/car"> <button>Car</button></Link>
           
-          <Link to="/Client"> <button>Client</button> </Link>
+          <Link to="/clients"> <button>Client</button> </Link>
           
           <Link to="/Fournisseur"><button>Fournisseur</button></Link>
           
-          <Link to="/Soustraitan"><button>Sous-traitanlist</button></Link>
+          <Link to="/sousTraitants"><button>Sous-traitanlist</button></Link>
           
           <Link to="/Article"><button>Article</button></Link>
     </nav>

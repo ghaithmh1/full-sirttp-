@@ -1,25 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const articleController = require('../controllers/articleController');
+const { protect } = require('../middlewares/authMiddleware');
 
-// Get all Articles
-router.get('/', articleController.getArticles); // ici renvoie tous les articles sans filtre
+// Get articles for current entreprise
+router.get('/', protect(), articleController.getArticlesForCurrentEntreprise);
 
-// Get Articles by entrepriseId
-router.get('/entreprise/:entrepriseId', articleController.getArticlesByEntrepriseId);
+// Get articles by entrepriseId
+router.get('/entreprise/:entrepriseId', protect(), articleController.getArticlesByEntrepriseId);
 
-// Get one Article by article id
-router.get('/:id', articleController.getArticle, (req, res) => {
-  res.json(res.article);
-});
+// Get one article
+router.get('/:id', protect(), articleController.getArticle);
 
-// Create Article
-router.post('/', articleController.createArticle);
+// Create article
+router.post('/', protect(['admin', 'superadmin']), articleController.createArticle);
 
-// Update Article
-router.patch('/:id', articleController.getArticle, articleController.updateArticle);
+// Update article
+router.put('/:id', protect(['admin', 'superadmin']), articleController.updateArticle);
 
-// Delete Article
-router.delete('/:id', articleController.getArticle, articleController.deleteArticle);
+// Delete article
+router.delete('/:id', protect(['admin', 'superadmin']), articleController.deleteArticle);
 
 module.exports = router;

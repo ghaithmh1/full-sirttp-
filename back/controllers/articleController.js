@@ -1,77 +1,168 @@
 const Article = require('../models/Article');
-const mongoose=require("mongoose")
 
-
-
-async function getArticles(req, res) {
+// Get articles for current entreprise
+async function getArticlesForCurrentEntreprise(req, res) {
   try {
-      const Articles = await Article.find();
-      res.json(Articles);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-}}
+    const articles = await Article.find({ entrepriseId: req.user.entrepriseId });
+    res.json({
+      success: true,
+      count: articles.length,
+      data: articles
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error: ' + err.message
+    });
+  }
+}
+
+// Get articles by entrepriseId
 async function getArticlesByEntrepriseId(req, res) {
   try {
-    const { entrepriseId } = req.params;
-    const entrepriseObjectId = new mongoose.Types.ObjectId(entrepriseId);
-    const articles = await Article.find({ entrepriseId: entrepriseObjectId });
-    res.json(articles);
+    const articles = await Article.find({ entrepriseId: req.params.entrepriseId });
+    res.json({
+      success: true,
+      count: articles.length,
+      data: articles
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error: ' + err.message
+    });
   }
 }
 
-async function getArticle(req, res, next) {
-  let article; // Lowercase variable
+// Get single article
+async function getArticle(req, res) {
   try {
-    article = await Article.findById(req.params.id);
-    if (article == null) {
-      return res.status(404).json({ message: 'Cannot find article' });
+    const article = await Article.findById(req.params.id);
+    
+    if (!article) {
+      return res.status(404).json({
+        success: false,
+        message: 'Article not found'
+      });
     }
+    
+    if (article.entrepriseId.toString() !== req.user.entrepriseId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this article'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: article
+    });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Server error: ' + err.message
+    });
   }
-  res.article = article; // Lowercase property
-  next();
 }
 
+// Create article
 async function createArticle(req, res) {
-  const article = new Article({
-    name: req.body.name,
-    model: req.body.model,
-    entrepriseId:req.body.entrepriseId,
-  });
   try {
-    const newArticle = await article.save(); 
-    res.status(201).json(newArticle);
+    const article = new Article({
+      name: req.body.name,
+      model: req.body.model,
+      entrepriseId: req.user.entrepriseId
+    });
+
+    const newArticle = await article.save();
+    
+    res.status(201).json({
+      success: true,
+      data: newArticle
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: 'Validation error: ' + err.message
+    });
   }
 }
 
+// Update article
 async function updateArticle(req, res) {
-  if (req.body.name != null) res.article.name = req.body.name;
-  if (req.body.model != null) res.article.model = req.body.model;
   try {
-    const updatedArticle = await res.article.save();
-    res.json(updatedArticle);
+    const article = await Article.findById(req.params.id);
+    
+    if (!article) {
+      return res.status(404).json({
+        success: false,
+        message: 'Article not found'
+      });
+    }
+    
+    if (article.entrepriseId.toString() !== req.user.entrepriseId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this article'
+      });
+    }
+
+    // Update fields
+    article.name = req.body.name || article.name;
+    article.model = req.body.model || article.model;
+    
+    const updatedArticle = await article.save();
+    
+    res.json({
+      success: true,
+      data: updatedArticle
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      success: false,
+      message: 'Update failed: ' + err.message
+    });
   }
 }
 
+// Delete article
 async function deleteArticle(req, res) {
   try {
-    await res.article.deleteOne();
-    res.json({ message: 'Deleted article' });
+    const article = await Article.findById(req.params.id);
+    
+    if (!article) {
+      return res.status(404).json({
+        success: false,
+        message: 'Article not found'
+      });
+    }
+    
+    if (article.entrepriseId.toString() !== req.user.entrepriseId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this article'
+      });
+    }
+
+    await article.deleteOne();
+    
+    res.json({
+      success: true,
+      message: 'Article deleted successfully'
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Delete failed: ' + err.message
+    });
   }
 }
+
 module.exports = {
-  getArticles,
+  getArticlesForCurrentEntreprise,
+  getArticlesByEntrepriseId,
   getArticle,
   createArticle,
   updateArticle,
-  deleteArticle,getArticlesByEntrepriseId
+  deleteArticle
 };

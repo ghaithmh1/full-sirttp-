@@ -71,6 +71,7 @@ app.use('/api/fournisseurs', require('./routes/fournisseurRoutes'));
 app.use('/api/sous-traitants', require('./routes/sousTraitantRoutes'));
 app.use('/api/activities', require('./routes/activityRoutes'));
 app.use('/api/entreprises', require('./routes/entrepriseRoutes'));
+app.use('/api/articles', require('./routes/articleRoutes'));
 
 
 // Basic route for testing   

@@ -9,12 +9,11 @@ import CarList from './components/car/CarList';
 import FournisseurList from './components/fournisseur/FournisseurList';
 import FournisseurForm from './components/fournisseur/FournisseurForm';
 import ClientManager from "./components/Client/clientManager";
-import FournisseurManager from "./components/Fournisseurs/fournisseurManager";
-import SousTraitantManager from "./components/SousTraitant/sousTraitantManager";
 import Home from './components/usercomponents/home.jsx';
 import ChoixEntreprise from'./components/entreprise/choixEntreprise.jsx';
 import JoindreEntreprise from'./components/entreprise/JoindreEntreprise.jsx';
 import Navbar from './components/usercomponents/navbar.jsx';
+import SousTraitantManager from "./components//SousTraitant/sousTraitantManager.jsx";
 
 function App() {
   return (
@@ -51,9 +50,12 @@ function App() {
 
 
           <Route path="/clients" element={<ClientManager />} />
-          <Route path="/fournisseurs" element={<FournisseurManager />} />
-          <Route path="/sousTraitants" element={<SousTraitantManager />} />
+          <Route path="/createClient" element={<ClientManager />} />
+          <Route path="/editClient/:id" element={<ClientManager />} />
 
+
+
+          <Route path="/sousTraitants" element={<SousTraitantManager />} />
 
         </Routes>
       </div>

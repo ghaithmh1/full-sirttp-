@@ -23,8 +23,7 @@ const sousTraitantSchema = new mongoose.Schema({
     required: [true, 'Adresse est obligatoire']
   },
   specialite: {
-    type: String,
-    required: [true, 'Spécialité est obligatoire']
+    type: String
   },
   depot: {
     type: mongoose.Schema.Types.ObjectId,

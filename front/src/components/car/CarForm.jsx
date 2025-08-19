@@ -70,7 +70,7 @@ const CarForm = () => {
       }
     }
   };
-
+  
   const validate = () => {
     const newErrors = {};
     

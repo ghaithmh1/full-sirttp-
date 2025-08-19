@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getArticle, createArticle, updateArticle } from '../../services/api';
 
 const ArticleForm = () => {
-  const [formData, setFormData] = useState({ name: '', model: '', entrepriseId: '' });
+  const [formData, setFormData] = useState({ name: '', model: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { id } = useParams();
@@ -11,32 +11,24 @@ const ArticleForm = () => {
   const isEdit = Boolean(id);
 
   useEffect(() => {
-  if (!isEdit) {
-    const storedId = localStorage.getItem("entrepriseId");
-    if (storedId) {
-      setFormData(prev => ({ ...prev, entrepriseId: storedId }));
+    if (isEdit) {
+      fetchArticle();
     }
-  }
-}, [isEdit]);
-
-
-useEffect(() => {
-  if (isEdit) {
-    fetchArticle();
-  }
-}, [id, isEdit]);
-
+  }, [id, isEdit]);
 
   const fetchArticle = async () => {
     try {
       setLoading(true);
+      setError('');
       const { data } = await getArticle(id);
       
-      setFormData({ ...data, entrepriseId: data.entrepriseId || '' });
-      setError('');
+      // Ensure we only take the fields we need
+      setFormData({
+        name: data.data.name,
+        model: data.data.model
+      });
     } catch (err) {
-      setError('Failed to load article');
-      console.error(err);
+      setError('Failed to load article: ' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
@@ -48,20 +40,43 @@ useEffect(() => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form inputs
+    if (!formData.name.trim()) {
+      setError('Name is required');
+      return;
+    }
+    
+    if (!formData.model.trim()) {
+      setError('Model is required');
+      return;
+    }
+    
     setLoading(true);
+    setError('');
 
     try {
       if (isEdit) {
-        await updateArticle(id, formData);
+        // Only send the fields that can be updated
+        await updateArticle(id, {
+          name: formData.name,
+          model: formData.model
+        });
       } else {
-        console.log(formData);
-        await createArticle(formData);
-        
+        await createArticle({
+          name: formData.name,
+          model: formData.model
+        });
       }
       navigate('/article');
     } catch (err) {
-      setError(`Operation failed: ${err.response?.data?.message || err.message}`);
-      console.error(err);
+      // Handle different error formats
+      const errorMessage = err.response?.data?.message || 
+                           err.response?.data?.error || 
+                           err.message || 
+                           'Operation failed';
+      
+      setError(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -71,7 +86,11 @@ useEffect(() => {
     <div className="container mt-4">
       <h2 className="mb-4">{isEdit ? 'Edit Article' : 'Create New Article'}</h2>
 
-      {error && <div className="alert alert-danger mb-4">{error}</div>}
+      {error && (
+        <div className="alert alert-danger mb-4">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
@@ -84,8 +103,10 @@ useEffect(() => {
             className="form-control"
             required
             placeholder="Enter article name"
+            disabled={loading}
           />
         </div>
+        
         <div className="mb-4">
           <label className="form-label">Model *</label>
           <input
@@ -96,22 +117,26 @@ useEffect(() => {
             className="form-control"
             required
             placeholder="Enter model number"
+            disabled={loading}
           />
         </div>
+        
         <div className="d-flex gap-2">
           <button
             type="submit"
             className="btn btn-primary"
             disabled={loading}
           >
-            {loading ? (
-              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            ) : isEdit ? (
-              'Update Article'
-            ) : (
-              'Create Article'
+            {loading && (
+              <span 
+                className="spinner-border spinner-border-sm me-2" 
+                role="status" 
+                aria-hidden="true"
+              ></span>
             )}
+            {isEdit ? 'Update Article' : 'Create Article'}
           </button>
+          
           <button
             type="button"
             className="btn btn-outline-secondary"

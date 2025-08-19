@@ -1,11 +1,38 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/articles';
+// Create axios instance with interceptors
+const api = axios.create({
+  baseURL: 'http://localhost:5000/api'
+});
 
-export const getArticles = () => axios.get(API_URL);
-export const getArticlesByEntrepriseId = (entrepriseId) =>
-  axios.get(`${API_URL}/entreprise/${entrepriseId}`);
-export const getArticle = (id) => axios.get(`${API_URL}/${id}`);
-export const createArticle = (article) => axios.post(API_URL, article);
-export const updateArticle = (id, article) => axios.patch(`${API_URL}/${id}`, article);
-export const deleteArticle = (id) => axios.delete(`${API_URL}/${id}`);   
+// Add request interceptor
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, error => {
+  return Promise.reject(error);
+});
+
+// Add response interceptor
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Article endpoints
+export const getArticlesForCurrentEntreprise = () => api.get('/articles');
+export const getArticlesByEntrepriseId = (entrepriseId) => 
+  api.get(`/articles/entreprise/${entrepriseId}`);
+export const getArticle = (id) => api.get(`/articles/${id}`);
+export const createArticle = (article) => api.post('/articles', article);
+export const updateArticle = (id, article) => api.put(`/articles/${id}`, article);
+export const deleteArticle = (id) => api.delete(`/articles/${id}`);
