@@ -76,7 +76,7 @@ app.use('/api/fournisseurs', require('./routes/fournisseurRoutes'));
 app.use('/api/sous-traitants', require('./routes/sousTraitantRoutes'));
 app.use('/api/activities', require('./routes/activityRoutes'));
 app.use('/api/entreprises', require('./routes/entrepriseRoutes'));
-app.use("/api/produits", produitRoutes);
+app.use("/api/produits", require('./routes/produitRoutes'));
 app.use("/api/demandePrix", demandePrixRoutes);
 app.use("/api/bonCommandes", bonCommandeRoutes);
 

@@ -4,23 +4,30 @@ export default function ProduitManager() {
   const [produits, setProduits] = useState([]);
   const [form, setForm] = useState({
     nom: "",
-    quantite: 0,
+    quantite: "",
     unite: "",
-    prixUnitaire: 0,
+    prixUnitaire: "",
     description: ""
   });
   const [editId, setEditId] = useState(null);
   const API_URL = "http://localhost:5000/api/produits";
 
-  // Fetch produits depuis le backend
+  // Fetch produits
   async function fetchProduits() {
     try {
-      const res = await fetch(API_URL);
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_URL, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // ✅ Fixed: added backticks
+        },
+      });
       const data = await res.json();
-      console.log("Fetched produits:", data);
-      setProduits(data.data || []);
+      console.log("Fetched data:", data);
+      setProduits(data.success ? data.data || [] : []);
     } catch (error) {
       console.error("Fetch error:", error);
+      setProduits([]);
     }
   }
 
@@ -28,20 +35,32 @@ export default function ProduitManager() {
     fetchProduits();
   }, []);
 
-  // Handle Add ou Update
+  // Handle form submission for Add or Edit
   async function handleSubmit(e) {
     e.preventDefault();
+    console.log("handleSubmit triggered", form);
+    
     try {
       const method = editId ? "PUT" : "POST";
-      const url = editId ? `${API_URL}/${editId}` : API_URL;
-
+      const url = editId ? `${API_URL}/${editId}` : API_URL; // ✅ Fixed: added backticks
+      
       await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`, // ✅ Fixed: added backticks
+        },
         body: JSON.stringify(form),
       });
-
-      setForm({ nom: "", quantite: 0, unite: "", prixUnitaire: 0, description: "" });
+      
+      // ✅ Fixed: reset with correct field names
+      setForm({ 
+        nom: "", 
+        quantite: "", 
+        unite: "", 
+        prixUnitaire: "", 
+        description: "" 
+      });
       setEditId(null);
       fetchProduits();
     } catch (error) {
@@ -49,22 +68,27 @@ export default function ProduitManager() {
     }
   }
 
-  // Préparer la modification
+  // Prepare form for editing
   function handleEdit(produit) {
     setEditId(produit._id);
     setForm({
       nom: produit.nom || "",
-      quantite: produit.quantite || 0,
+      quantite: produit.quantite || "",
       unite: produit.unite || "",
-      prixUnitaire: produit.prixUnitaire || 0,
+      prixUnitaire: produit.prixUnitaire || "",
       description: produit.description || "",
     });
   }
 
-  // Supprimer un produit
+  // Delete a produit
   async function handleDelete(id) {
     try {
-      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      await fetch(`${API_URL}/${id}`, { // ✅ Fixed: added backticks
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`, // ✅ Fixed: added backticks
+        },
+      });
       fetchProduits();
     } catch (error) {
       console.error("Delete error:", error);
@@ -74,6 +98,7 @@ export default function ProduitManager() {
   return (
     <div style={{ maxWidth: "900px", margin: "auto", padding: "1rem" }}>
       <h2>{editId ? "Modifier Produit" : "Ajouter Produit"}</h2>
+      
       <form
         onSubmit={handleSubmit}
         style={{
@@ -119,6 +144,7 @@ export default function ProduitManager() {
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           style={{ flex: "1 1 250px", padding: "0.5rem" }}
         />
+        
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <button type="submit" style={{ padding: "0.5rem 1rem" }}>
             {editId ? "Mettre à jour" : "Ajouter"}
@@ -128,7 +154,14 @@ export default function ProduitManager() {
               type="button"
               onClick={() => {
                 setEditId(null);
-                setForm({ nom: "", quantite: 0, unite: "", prixUnitaire: 0, description: "" });
+                // ✅ Fixed: consistent field names and types
+                setForm({
+                  nom: "",
+                  quantite: "",
+                  unite: "",
+                  prixUnitaire: "",
+                  description: ""
+                });
               }}
               style={{ padding: "0.5rem 1rem" }}
             >
@@ -166,7 +199,10 @@ export default function ProduitManager() {
                 <td style={{ padding: "0.5rem" }}>{produit.prixUnitaire}</td>
                 <td style={{ padding: "0.5rem" }}>{produit.description}</td>
                 <td style={{ padding: "0.5rem", textAlign: "center" }}>
-                  <button onClick={() => handleEdit(produit)} style={{ marginRight: "0.5rem" }}>
+                  <button
+                    onClick={() => handleEdit(produit)}
+                    style={{ marginRight: "0.5rem" }}
+                  >
                     Modifier
                   </button>
                   <button

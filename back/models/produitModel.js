@@ -24,9 +24,15 @@ const produitSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true
-  }
+  },
+  entrepriseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Entreprise",
+      required: true
+    }
 }, {
   timestamps: true // Ajoute createdAt et updatedAt automatiquement
 });
+
 
 module.exports = mongoose.model('Produit', produitSchema);
