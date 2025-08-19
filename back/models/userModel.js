@@ -14,17 +14,18 @@ const userSchema = new mongoose.Schema({
     required: true,
     match: /^[259]\d{7}$/ 
   },
-  pwd: { type: String, required: true, select: false },
+  pwd: { type: String, select: false },
   role: { 
     type: String, 
     enum: ['user', 'admin', 'superadmin'], 
-    default: 'superadmin' 
+    default: 'user' 
   },
   entrepriseId: { 
   type: mongoose.Schema.Types.ObjectId, 
   ref: 'Entreprise',
   index: true
 },
+  completed: { type: Boolean, default: false },
   lastLogin: Date,
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });

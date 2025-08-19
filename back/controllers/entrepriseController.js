@@ -64,7 +64,11 @@ exports.createEntreprise = async (req, res) => {
     });
     
     const newEntreprise = await entreprise.save({ session });
-
+    await User.updateMany(
+      { _id: { $in: allUsers } },
+      { $set: { role: 'admin', entrepriseId: newEntreprise._id, completed: true } },
+      { session }
+    );
     // Update users to set role to admin and link to entreprise
     await User.updateMany(
       { _id: { $in: allUsers } },
@@ -377,14 +381,15 @@ exports.joinEntreprise = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { identifiantFiscal, userId } = req.body;
-    if (!identifiantFiscal || !userId) {
+    const { identifiantFiscal } = req.body;
+    const userId = req.user._id;
+
+    if (!identifiantFiscal) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ success: false, message: 'Identifiant fiscal and userId are required' });
+      return res.status(400).json({ success: false, message: 'Identifiant fiscal required' });
     }
 
-    // Find entreprise
     const entreprise = await Entreprise.findOne({ identifiantFiscal }).session(session);
     if (!entreprise) {
       await session.abortTransaction();
@@ -392,37 +397,35 @@ exports.joinEntreprise = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Entreprise not found' });
     }
 
-    // Check if already in entreprise
-    if (entreprise.users.includes(userId)) {
+    if (
+      entreprise.users.includes(userId) ||
+      entreprise.pendingUsers.some(u => u.userId.equals(userId))
+    ) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ success: false, message: 'User already in entreprise' });
+      return res.status(400).json({ success: false, message: 'User already joined or pending' });
     }
 
-    // Add user
-    entreprise.users.push(userId);
+    // Ajouter en pending
+    entreprise.pendingUsers.push({ userId });
     await entreprise.save({ session });
 
-    // Update user
-    const user = await User.findByIdAndUpdate(
+    // Mettre à jour l'utilisateur avec entrepriseId et completed
+    await User.findByIdAndUpdate(
       userId,
-      { entrepriseId: entreprise._id },
-      { new: true, session }
+      { entrepriseId: entreprise._id, completed: true },
+      { session }
     );
-
-    if (!user) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
 
     await session.commitTransaction();
     session.endSession();
 
-    // Log activity
-    await logActivity('update', 'Entreprise', entreprise._id, userId, entreprise._id, { action: 'join' });
+    return res.status(200).json({
+      success: true,
+      status: "pending",
+      message: "Votre demande est en attente d'approbation par l'admin"
+    });
 
-    res.status(200).json({ success: true, message: 'Vous avez rejoint l’entreprise avec succès', entreprise });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -430,3 +433,4 @@ exports.joinEntreprise = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+

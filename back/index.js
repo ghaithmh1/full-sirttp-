@@ -27,6 +27,9 @@ app.use(cors({
 // Connect DB
 connectDB();
 
+const { cleanupOrphanUsers } = require("./middlewares/cleanup");
+setInterval(cleanupOrphanUsers, 1000 * 60 * 60 * 24);
+
 // Socket.IO
 const io = new Server(server, {
   cors: {
@@ -52,6 +55,10 @@ const articleRoutes = require('./routes/articleRoutes');
 const clientRoutes = require("./routes/clientRoutes");
 const fournisseurRoutes = require("./routes/fournisseurRoutes");
 const sousTraitantRoutes = require("./routes/sousTraitantRoutes");
+const produitRoutes = require("./routes/produitRoutes");
+const demandePrixRoutes = require("./routes/demandePrixRoutes");
+const bonCommandeRoutes = require("./routes/bonCommandeRoutes");
+const activityRoutes = require("./routes/activityRoutes");
 
 
 // Root route:
@@ -71,8 +78,10 @@ app.use('/api/fournisseurs', require('./routes/fournisseurRoutes'));
 app.use('/api/sous-traitants', require('./routes/sousTraitantRoutes'));
 app.use('/api/activities', require('./routes/activityRoutes'));
 app.use('/api/entreprises', require('./routes/entrepriseRoutes'));
-app.use('/api/articles', require('./routes/articleRoutes'));
-
+app.use("/api/produits", require('./routes/produitRoutes'));
+app.use("/api/demandePrix", demandePrixRoutes);
+app.use("/api/bonCommandes", bonCommandeRoutes);
+app.use('/api/articles', articleRoutes);
 
 // Basic route for testing   
 app.get('/', (req, res) => {

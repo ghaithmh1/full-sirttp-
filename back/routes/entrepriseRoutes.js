@@ -4,7 +4,7 @@ const entrepriseController = require('../controllers/entrepriseController');
 const { protect } = require('../middlewares/authMiddleware');
 
 // Create entreprise (no protection needed - first step)
-router.post('/', entrepriseController.createEntreprise);
+router.post('/create', entrepriseController.createEntreprise);
 
 // Protected routes (require authentication)
 router.get('/my-entreprise', protect(), entrepriseController.getMyEntreprise);
@@ -14,6 +14,6 @@ router.put('/:id', protect(['admin', 'superadmin']), entrepriseController.update
 // User management
 router.post('/add-user', protect(['admin', 'superadmin']), entrepriseController.addUserToEntreprise);
 router.post('/remove-user', protect(['admin', 'superadmin']), entrepriseController.removeUserFromEntreprise);
-router.post('/join', protect(), entrepriseController.joinEntreprise);
+router.post('/join', protect({ requireEntreprise: false }), entrepriseController.joinEntreprise);
 
 module.exports = router;

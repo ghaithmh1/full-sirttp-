@@ -7,44 +7,51 @@ const jwt = require('jsonwebtoken');
 exports.register = async (req, res) => {
   try {
     const { nom, prenom, email, pwd, num } = req.body;
-    
-    // Validate input
+
+    // Validation basique
     if (!nom || !prenom || !email || !pwd || !num) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
+      return res.status(400).json({ success: false, message: 'Tous les champs sont requis' });
     }
-    
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ success: false, message: 'Invalid email format' });
+      return res.status(400).json({ success: false, message: 'Format d’email invalide' });
     }
-    
-    if (!/^[259]\d{7}$/.test(num)) {   
-      return res.status(400).json({ success: false, message: 'Invalid phone number' });
+
+    if (!/^[259]\d{7}$/.test(num)) {
+      return res.status(400).json({ success: false, message: 'Numéro de téléphone invalide' });
     }
-    
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: 'Email already exists' });
+
+    // Vérification email
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ success: false, message: 'Email déjà utilisé' });
     }
-    
-    // Create user
+
+    // Vérification numéro
+    const existingNum = await User.findOne({ num });
+    if (existingNum) {
+      return res.status(400).json({ success: false, message: 'Numéro de téléphone déjà utilisé' });
+    }
+
+    // Création utilisateur
     const user = new User({ nom, prenom, email, pwd, num });
     const newUser = await user.save();
-    
-    // Generate token
+
+    // Génération token
     const token = newUser.generateAuthToken();
-    
-    res.status(201).json({ 
-      success: true, 
+
+    res.status(201).json({
+      success: true,
       data: {
         _id: newUser._id,
         email: newUser.email,
         token
       }
     });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
 
@@ -52,33 +59,28 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, pwd } = req.body;
-    
-    // Validate input
+
     if (!email || !pwd) {
-      return res.status(400).json({ success: false, message: 'Email and password are required' });
+      return res.status(400).json({ success: false, message: 'Email et mot de passe sont requis' });
     }
-    
-    // Find user   
+
     const user = await User.findOne({ email }).select('+pwd');
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Email non trouvé' });
     }
-    
-    // Check password
+
     const isMatch = await user.comparePassword(pwd);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Mot de passe incorrect' });
     }
-    
-    // Update last login
+
     user.lastLogin = new Date();
     await user.save();
-    
-    // Generate token
+
     const token = user.generateAuthToken();
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       data: {
         _id: user._id,
         email: user.email,
@@ -89,17 +91,16 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
+
 
 // Get all users for current enterprise
 exports.getUsers = async (req, res) => {
   try {
     const users = await User.find({ entrepriseId: req.user.entrepriseId });
     res.json({ success: true, data: users });
-    // Generate token
-    const token = User.generateAuthToken();
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server error' });

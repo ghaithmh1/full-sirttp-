@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./Login.css"; // Import du fichier CSS
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
     const payload = { email, pwd };
     console.log("Envoi login :", payload);
@@ -24,31 +27,25 @@ export default function LoginForm() {
         console.log("Connexion réussie :", data);
 
         localStorage.setItem("token", data.data.token);
-
         localStorage.setItem("userId", data.data._id);
-        localStorage.setItem("entrepriseId", data.data.entrepriseId);
 
-        console.log("user id from local storage :",data.data._id );
-
-        console.log("entreprise id from local storage :",data.data.entrepriseId );
-
-        alert("Connexion réussie !");
-        navigate("/home"); // 🔹 redirection directe vers home
+        navigate("/home");
       } else {
         const errData = await res.json();
-        alert("Erreur : " + (errData.message || "Une erreur est survenue"));
+        setError(errData.message || "Une erreur est survenue");
       }
     } catch (error) {
-      console.error("Erreur réseau :", error);
-      alert("Erreur réseau, merci de réessayer plus tard");
+      setError("Erreur réseau, merci de réessayer plus tard");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 400, margin: "auto" }}>
+    <form onSubmit={handleSubmit} className="login-form">
       <h2>Login</h2>
 
-      <div>
+      {error && <p className="error-message">{error}</p>}
+
+      <div className="form-group">
         <label>Email</label>
         <input
           type="email"
@@ -58,7 +55,7 @@ export default function LoginForm() {
         />
       </div>
 
-      <div>
+      <div className="form-group">
         <label>Mot de passe</label>
         <input
           type="password"
@@ -68,16 +65,16 @@ export default function LoginForm() {
         />
       </div>
 
-      <button type="submit" style={{ marginTop: 10 }}>Login</button>
-
-      {/* 🔹 Bouton pour aller à l'inscription */}
-      <button
-        type="button"
-        onClick={() => navigate("/register")}
-        style={{ marginTop: 10, marginLeft: 10 }}
-      >
-        Créer un compte
-      </button>
+      <div className="button-group">
+        <button type="submit" className="submit-button">Login</button>
+        <button
+          type="button"
+          onClick={() => navigate("/register")}
+          className="secondary-button"
+        >
+          Créer un compte
+        </button>
+      </div>
     </form>
   );
 }

@@ -39,6 +39,9 @@ const Navbar = () => {
           <Link to="/sousTraitants"><button>Sous-traitanlist</button></Link>
           
           <Link to="/Article"><button>Article</button></Link>
+
+          <Link to="/activity"><button>activity</button></Link>
+
     </nav>
   );
 };

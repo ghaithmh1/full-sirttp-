@@ -9,12 +9,16 @@ import CarList from './components/car/CarList';
 import FournisseurList from './components/fournisseur/FournisseurList';
 import FournisseurForm from './components/fournisseur/FournisseurForm';
 import ClientManager from "./components/Client/clientManager";
+import SousTraitantManager from "./components/SousTraitant/sousTraitantManager";
 import Home from './components/usercomponents/home.jsx';
 import ChoixEntreprise from'./components/entreprise/choixEntreprise.jsx';
 import JoindreEntreprise from'./components/entreprise/JoindreEntreprise.jsx';
+import ProduitManager from './components/Produit/produitManager.jsx';
+import DemandePrixManager from './components/DemandePrix/demandePrixManager.jsx';
+import BonCommandeManager from './components/BonCommande/bonCommandeManager.jsx';
 import Navbar from './components/usercomponents/navbar.jsx';
-import SousTraitantManager from "./components//SousTraitant/sousTraitantManager.jsx";
-
+import ActivityTable from './components/Activity/ActivityTable.jsx';
+import './App.css';
 function App() {
   return (
     <BrowserRouter>
@@ -29,8 +33,10 @@ function App() {
           <Route path="/joindreEntreprise" element={<JoindreEntreprise />} />
           <Route path="/ChoixEntreprise" element={<ChoixEntreprise />} />
 
-          <Route path="/home" element={<Home />} />
 
+          <Route path="/" element={<Home />} />
+
+           <Route path="/activity" element={<ActivityTable />} />  
 
           <Route path="/Article" element={<ArticleList />} />
           <Route path="/createArticle" element={<ArticleForm />} />
@@ -56,6 +62,13 @@ function App() {
 
 
           <Route path="/sousTraitants" element={<SousTraitantManager />} />
+
+          <Route path="/clients" element={<ClientManager />} />
+          <Route path="/sousTraitants" element={<SousTraitantManager />} />
+          <Route path="/produits" element={<ProduitManager />} />
+          <Route path="/demandesPrix" element={<DemandePrixManager/>} />
+          <Route path="/bonsCommande" element={<BonCommandeManager/>} />
+
 
         </Routes>
       </div>
