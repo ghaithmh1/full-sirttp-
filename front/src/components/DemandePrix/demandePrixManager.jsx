@@ -4,6 +4,7 @@ export default function DemandePrixManager() {
   const [demandes, setDemandes] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
   const [produits, setProduits] = useState([]);
+  const [debugInfo, setDebugInfo] = useState({}); // Add debug state
 
   const [form, setForm] = useState({
     numeroDemande: "",
@@ -20,85 +21,137 @@ export default function DemandePrixManager() {
   const API_FOURNISSEURS = "http://localhost:5000/api/fournisseurs";
   const API_PRODUITS = "http://localhost:5000/api/produits";
 
-  // Fetch demandes
+  // Enhanced fetch demandes with detailed debugging
   async function fetchDemandes() {
+    console.log("🚀 Starting fetchDemandes...");
+    
     try {
-      const res = await fetch(API_URL);
+      const token = localStorage.getItem("token");
+      console.log("📝 Token exists:", !!token);
+      console.log("📝 Token preview:", token ? token.substring(0, 20) + "..." : "No token");
+
+      const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      };
+      console.log("📤 Request headers:", headers);
+      console.log("📍 API URL:", API_URL);
+
+      const res = await fetch(API_URL, { headers });
+      
+      console.log("📥 Response status:", res.status);
+      console.log("📥 Response ok:", res.ok);
+      console.log("📥 Response headers:", Object.fromEntries(res.headers.entries()));
+
       const data = await res.json();
-      //console.log("Demandes data:", data); // Debug
-      setDemandes(data.data || data);
+      console.log("📦 Full API Response:", data);
+      console.log("📊 Response structure:", {
+        hasSuccess: 'success' in data,
+        successValue: data.success,
+        hasData: 'data' in data,
+        dataType: typeof data.data,
+        dataLength: Array.isArray(data.data) ? data.data.length : 'not array',
+        dataContent: data.data
+      });
+
+      // Update debug info for display
+      setDebugInfo({
+        lastFetch: new Date().toISOString(),
+        apiResponse: data,
+        tokenExists: !!token,
+        responseStatus: res.status,
+        dataLength: Array.isArray(data.data) ? data.data.length : 0
+      });
+
+      if (data.success && Array.isArray(data.data)) {
+        console.log("✅ Setting demandes:", data.data);
+        setDemandes(data.data);
+      } else {
+        console.log("❌ Invalid response structure, setting empty array");
+        setDemandes([]);
+      }
+
     } catch (error) {
-      console.error("Erreur fetch demandes:", error);
+      console.error("💥 Fetch demandes error:", error);
+      console.error("💥 Error name:", error.name);
+      console.error("💥 Error message:", error.message);
+      console.error("💥 Error stack:", error.stack);
+      
+      setDebugInfo(prev => ({
+        ...prev,
+        lastError: {
+          name: error.name,
+          message: error.message,
+          timestamp: new Date().toISOString()
+        }
+      }));
+      
+      setDemandes([]);
     }
   }
 
-  // Fetch fournisseurs
+  // Enhanced fetch fournisseurs with debugging
   async function fetchFournisseurs() {
     try {
-      //console.log("Fetching fournisseurs from:", API_FOURNISSEURS); 
-      const res = await fetch(API_FOURNISSEURS);
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_FOURNISSEURS, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
       
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      console.log("🏭 Fournisseurs response status:", res.status);
       
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      //console.log("Fournisseurs raw response:", data); // Debug
       
-      const fournisseursData = data.data || data;
-      //console.log("Fournisseurs processed:", fournisseursData); // Debug
+      console.log("🏭 Fournisseurs data:", data);
+      setFournisseurs(data.data || data);
       
-      setFournisseurs(fournisseursData);
     } catch (error) {
-      console.error("Erreur fetch fournisseurs:", error);
+      console.error("💥 Fetch fournisseurs error:", error);
+      setFournisseurs([]);
     }
   }
 
-  // Fetch produits
+  // Enhanced fetch produits with debugging
   async function fetchProduits() {
     try {
-     // console.log("Fetching produits from:", API_PRODUITS); // Debug
-      const res = await fetch(API_PRODUITS);
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_PRODUITS, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
       
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      console.log("📦 Produits response status:", res.status);
       
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      //console.log("Produits raw response:", data); // Debug
       
-      const produitsData = data.data || data;
-      //console.log("Produits processed:", produitsData); // Debug
+      console.log("📦 Produits data:", data);
+      setProduits(data.data || data);
       
-      setProduits(produitsData);
     } catch (error) {
-      console.error("Erreur fetch produits:", error);
+      console.error("💥 Fetch produits error:", error);
+      setProduits([]);
     }
   }
 
   useEffect(() => {
+    console.log("🎯 Component mounted, starting data fetch...");
     fetchDemandes();
     fetchFournisseurs();
     fetchProduits();
   }, []);
-/*
-  // Debug: Log state changes
-  useEffect(() => {
-    console.log("Fournisseurs state updated:", fournisseurs);
-  }, [fournisseurs]);
 
-  useEffect(() => {
-    console.log("Produits state updated:", produits);
-  }, [produits]);
-*/
-  const getFournisseurName = (fournisseur) => {
-  if (!fournisseur) return "Sans nom";
-  return fournisseur.name || fournisseur.nom || "Sans nom";
-};
+  // Helper to get fournisseur name
+  const getFournisseurName = (fournisseur) =>
+    fournisseur?.name || fournisseur?.nom || "Sans nom";
 
-
-  
-  // Handle ajout produit
+  // Add produit to liste
   function addProduitToListe() {
     setForm({
       ...form,
@@ -106,14 +159,14 @@ export default function DemandePrixManager() {
     });
   }
 
-  // Modifier un produit dans la liste
+  // Update produit in liste
   function updateProduit(index, field, value) {
     const newListe = [...form.listeProduits];
     newListe[index][field] = value;
     setForm({ ...form, listeProduits: newListe });
   }
 
-  // Supprimer un produit de la liste
+  // Remove produit from liste
   function removeProduit(index) {
     const newListe = [...form.listeProduits];
     newListe.splice(index, 1);
@@ -126,15 +179,37 @@ export default function DemandePrixManager() {
     try {
       const method = editId ? "PUT" : "POST";
       const url = editId ? `${API_URL}/${editId}` : API_URL;
+      const token = localStorage.getItem("token");
 
-      //console.log("Submitting form data:", form); // Debug
+      console.log("Form products to submit:", form.listeProduits);
 
-      await fetch(url, {
+      const payload = {
+        ...form,
+        numeroDemande: form.numeroDemande,
+        listeProduits: form.listeProduits.map(p => {
+          const produit = produits.find(prod => prod._id === p.idProduit);
+          return {
+            idProduit: p.idProduit,
+            nomProduit: produit?.nom || "",
+            quantiteDemandee: Number(p.quantiteDemandee),
+          };
+        }),
+      };
+
+      const response = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Reset form
       setForm({
         numeroDemande: "",
         dateDemande: "",
@@ -146,42 +221,45 @@ export default function DemandePrixManager() {
       setEditId(null);
       fetchDemandes();
     } catch (error) {
-      console.error("Erreur submit:", error);
+      console.error("Submit error:", error);
     }
   }
 
-  // Edit
+  // Edit demande
   function handleEdit(demande) {
     setEditId(demande._id);
     setForm({
       numeroDemande: demande.numeroDemande,
       dateDemande: demande.dateDemande?.slice(0, 10),
-      listeProduits: (demande.listeProduits || []).map(lp => ({
-      idProduit: lp.idProduit?._id || lp.idProduit,
-      nomProduit: lp.idProduit?.nom || "",      // store name for display
-      quantiteDemandee: lp.quantiteDemandee
-    })),
+      listeProduits: (demande.listeProduits || []).map((lp) => ({
+        idProduit: lp.idProduit?._id || lp.idProduit,
+        nomProduit: lp.idProduit?.nom || "",
+        quantiteDemandee: lp.quantiteDemandee,
+      })),
       statut: demande.statut,
       fournisseur: demande.fournisseur?._id || demande.fournisseur,
       description: demande.description,
     });
   }
 
-  // Delete
+  // Delete demande
   async function handleDelete(id) {
     try {
-      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      const token = localStorage.getItem("token");
+      await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       fetchDemandes();
     } catch (error) {
-      console.error("Erreur delete:", error);
+      console.error("Delete error:", error);
     }
   }
 
   return (
     <div style={{ maxWidth: "900px", margin: "auto", padding: "1rem" }}>
+
       <h2>{editId ? "Modifier Demande de Prix" : "Ajouter Demande de Prix"}</h2>
-      
-      
 
       <form onSubmit={handleSubmit} style={{ marginBottom: "1.5rem" }}>
         <input
@@ -195,21 +273,19 @@ export default function DemandePrixManager() {
           value={form.dateDemande}
           onChange={(e) => setForm({ ...form, dateDemande: e.target.value })}
         />
-
-        {/* Dropdown fournisseurs */}
         <select
           value={form.fournisseur}
           onChange={(e) => setForm({ ...form, fournisseur: e.target.value })}
           required
         >
-          <option value="">-- Choisir fournisseur ({fournisseurs.length} disponibles) --</option>
+          <option value="">-- Choisir fournisseur ({fournisseurs.length}) --</option>
           {fournisseurs.map((f) => (
             <option key={f._id} value={f._id}>
-              {f.name} {/* Fournisseurs use 'name' field */}
+              {f.name}
             </option>
           ))}
         </select>
-
+        
         <select
           value={form.statut}
           onChange={(e) => setForm({ ...form, statut: e.target.value })}
@@ -226,38 +302,40 @@ export default function DemandePrixManager() {
           onChange={(e) => setForm({ ...form, description: e.target.value })}
         />
 
-        {/* Liste Produits */}
         <h4>Produits demandés</h4>
         {form.listeProduits.map((p, index) => (
-        <div key={index} className="product-row">
-          <select
-            value={p.idProduit}
-            onChange={(e) => updateProduit(index, "idProduit", e.target.value)}
-            required
-          >
-            <option value={p.idProduit}>{p.nomProduit || "Choisir produit"}</option>
-            {produits
-              .filter(prod => prod._id !== p.idProduit) // avoid duplicate in list
-              .map((prod) => (
+          <div key={index} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+            <select
+              value={p.idProduit}
+              onChange={(e) => updateProduit(index, "idProduit", e.target.value)}
+              required
+            >
+              <option value="">Choisir produit</option>
+              {produits.map((prod) => (
                 <option key={prod._id} value={prod._id}>
                   {prod.nom} ({prod.prixUnitaire}€)
                 </option>
-            ))}
-          </select>
+              ))}
+            </select>
+            <input
+              type="number"
+              min="1"
+              value={p.quantiteDemandee}
+              onChange={(e) => updateProduit(index, "quantiteDemandee", Number(e.target.value))}
+              required
+            />
+            <button type="button" onClick={() => removeProduit(index)}>
+              Supprimer
+            </button>
+          </div>
+        ))}
 
-          <input
-            type="number"
-            value={p.quantiteDemandee}
-            onChange={(e) => updateProduit(index, "quantiteDemandee", e.target.value)}
-            required
-          />
-        </div>
-      ))}
+        <button type="button" onClick={addProduitToListe}>
+          + Ajouter produit
+        </button>
 
-
-        <button type="button" onClick={addProduitToListe}>+ Ajouter produit</button>
-
-        <br /><br />
+        <br />
+        <br />
         <button type="submit">{editId ? "Mettre à jour" : "Ajouter"}</button>
       </form>
 
@@ -277,7 +355,9 @@ export default function DemandePrixManager() {
         <tbody>
           {demandes.length === 0 ? (
             <tr>
-              <td colSpan="7" style={{ textAlign: "center" }}>Aucune demande trouvée.</td>
+              <td colSpan="7" style={{ textAlign: "center" }}>
+                Aucune demande trouvée.
+              </td>
             </tr>
           ) : (
             demandes.map((d) => (
@@ -286,20 +366,22 @@ export default function DemandePrixManager() {
                 <td>{d.dateDemande ? new Date(d.dateDemande).toLocaleDateString() : "—"}</td>
                 <td>{getFournisseurName(d.fournisseur)}</td>
                 <td>
-                  {d.listeProduits?.map((lp, i) => (
-                    <div key={i}>
-                      {typeof lp.idProduit === "object"
-                        ? lp.idProduit.nom
-                        : lp.idProduit}{" "}
-                      - {lp.quantiteDemandee}
-                    </div>
-                  ))}
+                  {d.listeProduits?.map((lp, i) => {
+                    const nomProduit =
+                      lp.nomProduit ||
+                      (lp.idProduit && typeof lp.idProduit === "object" ? lp.idProduit.nom : lp.idProduit);
+                    return (
+                      <div key={i}>
+                        {nomProduit} - {lp.quantiteDemandee}
+                      </div>
+                    );
+                  })}
                 </td>
                 <td>{d.statut}</td>
                 <td>{d.description}</td>
                 <td>
-                  <button onClick={() => handleEdit(d)}>✏️</button>
-                  <button onClick={() => handleDelete(d._id)}>🗑️</button>
+                  <button onClick={() => handleEdit(d)}>Modifier</button>
+                  <button onClick={() => handleDelete(d._id)}>Supprimer</button>
                 </td>
               </tr>
             ))

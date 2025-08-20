@@ -20,6 +20,11 @@ const bonCommandeSchema = new mongoose.Schema({
     enum: ['En attente', 'En cours', 'Répondu', 'Annulé'],
     default: 'En attente'
   },
+  entrepriseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Entreprise",
+    required: true
+  },
   description: String
 }, { timestamps: true });
 

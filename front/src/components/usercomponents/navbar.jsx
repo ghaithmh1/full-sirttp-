@@ -42,6 +42,12 @@ const Navbar = () => {
 
           <Link to="/activity"><button>activity</button></Link>
 
+          <Link to="/produits"><button>produits</button></Link>
+
+          <Link to="/demandesPrix"><button>demandePrix</button></Link>
+
+          <Link to="/bonsCommande"><button>BonCommande</button></Link>
+
     </nav>
   );
 };

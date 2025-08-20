@@ -1,114 +1,222 @@
-const createHttpError = require("http-errors");
-const BonCommande = require("../models/bonCommandeModel");
-const { default: mongoose } = require("mongoose");
+const BonCommande = require('../models/bonCommandeModel');
+const Activity = require('../models/Activity');
+const { logActivity } = require('../services/activityService');
 
-const addBonCommande = async (req, res, next) => {
+exports.debugBonCommandes = async (req, res) => {
   try {
-    const bonCommande = new BonCommande(req.body);
-    await bonCommande.save();
-    res
-      .status(201)
-      .json({ success: true, message: "BonCommande created!", data: bonCommande });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getBonCommandeById = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      const error = createHttpError(404, "Invalid id!");
-      return next(error);
-    }
-
-    const bonCommande = await BonCommande.findById(id);
-    if (!bonCommande) {
-      const error = createHttpError(404, "BonCommande not found!");
-      return next(error);
-    }
-
-    res.status(200).json({ success: true, data: bonCommande });
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-const getBonCommandes = async (req, res, next) => {
-  try {
-    const bonCommandes = await BonCommande.find()
-      .populate('listeProduits.idProduit', 'nom')
-      .populate('fournisseur', 'name')
-      .populate('client', 'name'); // ajout pour type=vente
-    res.status(200).json({ data: bonCommandes });
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-const updateBonCommande = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const updates = req.body;
-
-    console.log("BonCommande ID:", id);
-    console.log("Request body:", updates);
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return next(createHttpError(404, "Invalid id!"));
-    }
-
-    const bonCommande = await BonCommande.findById(id);
-    if (!bonCommande) {
-      return next(createHttpError(404, "BonCommande not found!"));
-    }
-
-    // Mettre à jour uniquement les champs envoyés
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value !== undefined) {
-        bonCommande[key] = value;
+    console.log('=== DEBUG START ===');
+    console.log('User object:', JSON.stringify(req.user, null, 2));
+    console.log('Enterprise ID:', req.user.entrepriseId);
+    console.log('Enterprise ID type:', typeof req.user.entrepriseId);
+    
+    // Test 1: Count documents
+    const count = await BonCommande.countDocuments();
+    console.log('Total BonCommande in database:', count);
+    
+    // Test 2: Count for this enterprise
+    const enterpriseCount = await BonCommande.countDocuments({ 
+      entrepriseId: req.user.entrepriseId 
+    });
+    console.log('BonCommande for this enterprise:', enterpriseCount);
+    
+    // Test 3: Get one document without filter
+    const anyBonCommande = await BonCommande.findOne();
+    console.log('Sample BonCommnade from DB:', JSON.stringify(anyBonCommande, null, 2));
+    
+    // Test 4: Try to find with enterprise filter
+    const filteredBonCommandes = await BonCommande.find({ 
+      entrepriseId: req.user.entrepriseId 
+    }).limit(1);
+    console.log('Filtered BonCommandes:', JSON.stringify(filteredBonCommandes, null, 2));
+    
+    // Test 5: Compare with Client model (which works)
+    const Client = require('../models/clientModel');
+    const clientCount = await Client.countDocuments({ 
+      entrepriseId: req.user.entrepriseId 
+    });
+    console.log('Clients for this enterprise:', clientCount);
+    
+    res.json({
+      success: true,
+      debug: {
+        totalBonCommandes: count
       }
     });
-
-    // Sauvegarder avec validations
-    await bonCommande.save();
-
-    res.status(200).json({
-      success: true,
-      message: "BonCommande updated",
-      data: bonCommande
+    
+  } catch (error) {
+    console.error('=== DEBUG ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error name:', error.name);
+    
+    res.status(500).json({
+      success: false,
+      error: {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      }
     });
+  }
+};
 
+// Get all BonCommande for current enterprise
+exports.getBonCommandes = async (req, res) => {
+  console.log("REQ.USER:!!!!!!", req.user); // <--- debug
+  try {
+    const bonCommandes = await BonCommande.find({ entrepriseId: req.user.entrepriseId })
+    .populate("fournisseur", "name")
+    .populate("client", "name"); 
+    console.log("=== POPULATED ===", JSON.stringify(bonCommandes, null, 2));
+    res.json({ success: true, data: bonCommandes });
   } catch (error) {
     console.error(error);
-    next(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-
-const deleteBonCommande = async (req, res, next) => {
+// Get single BonCommande
+exports.getBonCommandeById = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return next(createHttpError(404, "Invalid id!"));
-    }
-
-    const bonCommande = await BonCommande.findByIdAndDelete(id);
+    const bonCommande = await BonCommande.findOne({ 
+      _id: req.params.id, 
+      entrepriseId: req.user.entrepriseId 
+    }).populate("fournisseur", "name")
+    .populate("client", "name"); 
+    
     if (!bonCommande) {
-      return next(createHttpError(404, "BonCommande not found!"));
+      return res.status(404).json({ success: false, message: 'BonCommande not found' });
     }
-
-    res
-      .status(200)
-      .json({ success: true, message: "BonCommande deleted successfully" });
+    
+    res.json({ success: true, data: bonCommande });
   } catch (error) {
-    next(error);
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
+exports.addBonCommande = async (req, res) => {
+  try {
+    console.log("🚀 === CREATE BonCommande DEBUG ===");
+    console.log("📦 req.body:", JSON.stringify(req.body, null, 2));
+    console.log("👤 req.user:", JSON.stringify(req.user, null, 2));
+    console.log("🏢 req.user.entrepriseId:", req.user.entrepriseId);
+    console.log("🔍 entrepriseId type:", typeof req.user.entrepriseId);
 
-module.exports = { addBonCommande, getBonCommandeById, getBonCommandes, updateBonCommande, deleteBonCommande };
+    // ✅ FIXED: Build the data object conditionally - NO spreading of req.body
+    const bonCommandeData = {
+      numeroCommande: req.body.numeroCommande,
+      dateCommande: req.body.dateCommande,
+      typeBonCommande: req.body.typeBonCommande,
+      listeProduits: req.body.listeProduits,
+      statut: req.body.statut,
+      entrepriseId: req.user.entrepriseId
+    };
+
+    // Only add description if it exists
+    if (req.body.description) {
+      bonCommandeData.description = req.body.description;
+    }
+
+    // ✅ CRITICAL: Only add fournisseur OR client based on type and value
+    if (req.body.typeBonCommande === "achat" && req.body.fournisseur && req.body.fournisseur.trim() !== "") {
+      bonCommandeData.fournisseur = req.body.fournisseur;
+      console.log("✅ Added fournisseur:", req.body.fournisseur);
+    }
+
+    if (req.body.typeBonCommande === "vente" && req.body.client && req.body.client.trim() !== "") {
+      bonCommandeData.client = req.body.client;
+      console.log("✅ Added client:", req.body.client);
+    }
+
+    console.log("💾 Data before save (CLEANED):", JSON.stringify(bonCommandeData, null, 2));
+    console.log("🔍 entrepriseId in data:", bonCommandeData.entrepriseId);
+
+    const bonCommande = new BonCommande(bonCommandeData);
+    console.log("🏗️ Created instance (before save):", JSON.stringify(bonCommande.toObject(), null, 2));
+    
+    const newBonCommande = await bonCommande.save();
+    console.log("✅ Saved document:", JSON.stringify(newBonCommande.toObject(), null, 2));
+
+    // Log activity
+    await logActivity(
+      'create',
+      'BonCommande',
+      newBonCommande._id,
+      req.user.id,
+      req.user.entrepriseId,
+      newBonCommande
+    );
+
+    res.status(201).json({ success: true, data: newBonCommande });
+  } catch (error) {
+    console.error("❌ Creation error:", error);
+    console.error("❌ Error name:", error.name);
+    console.error("❌ Error message:", error.message);
+    console.error("❌ Validation errors:", error.errors);
+    res.status(400).json({ 
+      success: false, 
+      message: error.message,
+      errors: error.errors 
+    });
+  }
+};
+
+// Update BonCommande
+exports.updateBonCommande = async (req, res) => {
+  try {
+    const bonCommande = await BonCommande.findOneAndUpdate(
+      { _id: req.params.id, entrepriseId: req.user.entrepriseId },
+      req.body,
+      { new: true, runValidators: true }
+    );
+    
+    if (!bonCommande) {
+      return res.status(404).json({ success: false, message: 'BonCommande not found' });
+    }
+    
+    // Log activity
+    await logActivity(
+      'update', 
+      'BonCommande', 
+      bonCommande._id, 
+      req.user.id, 
+      req.user.entrepriseId,
+      req.body
+    );
+    
+    res.json({ success: true, data: bonCommande });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// Delete bonCommande
+exports.deleteBonCommande = async (req, res) => {
+  try {
+    const bonCommande = await BonCommande.findOneAndDelete({ 
+      _id: req.params.id, 
+      entrepriseId: req.user.entrepriseId 
+    });
+    
+    if (!bonCommande) {
+      return res.status(404).json({ success: false, message: 'BonCommande not found' });
+    }
+    
+    // Log activity
+    await logActivity(
+      'delete', 
+      'BonCommande', 
+      bonCommande._id, 
+      req.user.id, 
+      req.user.entrepriseId,
+      bonCommande
+    );
+    
+    res.json({ success: true, message: 'BonCommande deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

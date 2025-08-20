@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
 
 export default function BonCommandeManager() {
-  const [commandes, setCommandes] = useState([]);
+  const [bonCommandes, setBonCommandes] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
   const [clients, setClients] = useState([]);
   const [produits, setProduits] = useState([]);
+  const [debugInfo, setDebugInfo] = useState({});
 
   const [form, setForm] = useState({
     numeroCommande: "",
     dateCommande: "",
-    type: "achat",
+    typeBonCommande: "achat", // ✅ Default to "achat"
     listeProduits: [],
     statut: "En attente",
     fournisseur: "",
@@ -24,123 +25,194 @@ export default function BonCommandeManager() {
   const API_CLIENTS = "http://localhost:5000/api/clients";
   const API_PRODUITS = "http://localhost:5000/api/produits";
 
-  // --- Fetch functions ---
-  const fetchCommandes = async () => {
+  // Fetch all data
+  async function fetchBonCommandes() {
+    console.log("🚀 Starting fetchBonCommandes...");
     try {
-      const res = await fetch(API_URL);
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_URL, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+      
       const data = await res.json();
-      setCommandes(data.data || data);
-    } catch (err) {
-      console.error("Erreur fetch commandes:", err);
+      console.log("📦 BonCommandes response:", data);
+      
+      if (data.success && Array.isArray(data.data)) {
+        setBonCommandes(data.data);
+      } else {
+        setBonCommandes([]);
+      }
+    } catch (error) {
+      console.error("💥 Fetch bonCommandes error:", error);
+      setBonCommandes([]);
     }
-  };
+  }
 
-  const fetchFournisseurs = async () => {
+  async function fetchFournisseurs() {
     try {
-      const res = await fetch(API_FOURNISSEURS);
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_FOURNISSEURS, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
       const data = await res.json();
       setFournisseurs(data.data || data);
-    } catch (err) {
-      console.error("Erreur fetch fournisseurs:", err);
+    } catch (error) {
+      console.error("💥 Fetch fournisseurs error:", error);
+      setFournisseurs([]);
     }
-  };
+  }
 
-  const fetchClients = async () => {
+  async function fetchClients() {
     try {
-      const res = await fetch(API_CLIENTS);
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_CLIENTS, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
       const data = await res.json();
       setClients(data.data || data);
-    } catch (err) {
-      console.error("Erreur fetch clients:", err);
+    } catch (error) {
+      console.error("💥 Fetch clients error:", error);
+      setClients([]);
     }
-  };
+  }
 
-  const fetchProduits = async () => {
+  async function fetchProduits() {
     try {
-      const res = await fetch(API_PRODUITS);
+      const token = localStorage.getItem("token");
+      const res = await fetch(API_PRODUITS, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
       const data = await res.json();
       setProduits(data.data || data);
-    } catch (err) {
-      console.error("Erreur fetch produits:", err);
+    } catch (error) {
+      console.error("💥 Fetch produits error:", error);
+      setProduits([]);
     }
-  };
+  }
 
   useEffect(() => {
-    fetchCommandes();
+    fetchBonCommandes();
     fetchFournisseurs();
     fetchClients();
     fetchProduits();
   }, []);
 
-  const getFournisseurName = (f) => f?.nom || f?.name || "Sans nom";
-  const getClientName = (c) => c?.nom || c?.name || "Sans nom";
-
-  // --- Form handlers ---
-  const addProduitToListe = () => {
+  // ✅ CRITICAL: Handle type change and reset related fields
+  function handleTypeChange(newType) {
     setForm({
       ...form,
-      listeProduits: [
-        ...form.listeProduits,
-        { idProduit: "", nomProduit: "", quantite: 1 },
-      ],
+      typeBonCommande: newType,
+      // Reset the opposite field when switching types
+      fournisseur: newType === "achat" ? form.fournisseur : "",
+      client: newType === "vente" ? form.client : ""
     });
-  };
+  }
 
-  const updateProduit = (index, field, value) => {
+  // Add produit to liste
+  function addProduitToListe() {
+    setForm({
+      ...form,
+      listeProduits: [...form.listeProduits, { idProduit: "", quantite: 1, nomProduit: "" }],
+    });
+  }
+
+  // Update produit in liste
+  function updateProduit(index, field, value) {
     const newListe = [...form.listeProduits];
     newListe[index][field] = value;
-
-    // auto-set nomProduit if selecting a product from list
+    
+    // If updating idProduit, also update nomProduit
     if (field === "idProduit") {
-      const prod = produits.find((p) => p._id === value);
-      newListe[index].nomProduit = prod?.nom || "Produit inconnu";
+      const produit = produits.find(p => p._id === value);
+      newListe[index].nomProduit = produit?.nom || "";
     }
-
+    
     setForm({ ...form, listeProduits: newListe });
-  };
+  }
 
-  const removeProduit = (index) => {
+  // Remove produit from liste
+  function removeProduit(index) {
     const newListe = [...form.listeProduits];
     newListe.splice(index, 1);
     setForm({ ...form, listeProduits: newListe });
-  };
+  }
 
-  const handleSubmit = async (e) => {
+  // ✅ FIXED: Submit form with proper validation
+  async function handleSubmit(e) {
     e.preventDefault();
+    
+    // ✅ Frontend validation before sending
+    if (form.typeBonCommande === "achat" && (!form.fournisseur || form.fournisseur.trim() === "")) {
+      alert("Veuillez sélectionner un fournisseur pour un bon de commande d'achat");
+      return;
+    }
+    
+    if (form.typeBonCommande === "vente" && (!form.client || form.client.trim() === "")) {
+      alert("Veuillez sélectionner un client pour un bon de commande de vente");
+      return;
+    }
+
     try {
       const method = editId ? "PUT" : "POST";
       const url = editId ? `${API_URL}/${editId}` : API_URL;
+      const token = localStorage.getItem("token");
 
+      // ✅ CRITICAL: Build payload correctly based on type
       const payload = {
-        ...form,
-        typeBonCommande: form.type,
-        fournisseur:
-          form.type === "achat" && form.fournisseur ? form.fournisseur : null,
-        client: form.type === "vente" && form.client ? form.client : null,
-        dateCommande: form.dateCommande ? new Date(form.dateCommande) : undefined,
-        listeProduits: form.listeProduits.map((p) => ({
+        numeroCommande: form.numeroCommande,
+        dateCommande: form.dateCommande,
+        typeBonCommande: form.typeBonCommande, // ✅ Use the correct field name
+        listeProduits: form.listeProduits.map(p => ({
           idProduit: p.idProduit,
-          nomProduit:
-            produits.find((prod) => prod._id === p.idProduit)?.nom || p.nomProduit || "Produit inconnu",
-          quantite: p.quantite,
+          nomProduit: p.nomProduit,
+          quantite: Number(p.quantite),
         })),
+        statut: form.statut,
+        description: form.description,
       };
 
-      const res = await fetch(url, {
+      // ✅ Only add fournisseur OR client based on type
+      if (form.typeBonCommande === "achat") {
+        payload.fournisseur = form.fournisseur;
+      } else if (form.typeBonCommande === "vente") {
+        payload.client = form.client;
+      }
+
+      console.log("📤 Submitting payload:", payload);
+
+      const response = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Server Error: ${res.status} - ${errText}`);
+      const result = await response.json();
+      console.log("📥 Server response:", result);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status} - ${result.message || 'Unknown error'}`);
       }
 
+      // Reset form
       setForm({
         numeroCommande: "",
         dateCommande: "",
-        type: "achat",
+        typeBonCommande: "achat",
         listeProduits: [],
         statut: "En attente",
         fournisseur: "",
@@ -148,90 +220,115 @@ export default function BonCommandeManager() {
         description: "",
       });
       setEditId(null);
-      fetchCommandes();
-    } catch (err) {
-      console.error("Erreur submit:", err);
+      fetchBonCommandes();
+      
+      alert(editId ? "Bon de commande modifié avec succès!" : "Bon de commande ajouté avec succès!");
+      
+    } catch (error) {
+      console.error("Submit error:", error);
+      alert(`Erreur: ${error.message}`);
     }
-  };
+  }
 
-  const handleEdit = (commande) => {
-    setEditId(commande._id);
+  // Edit bonCommande
+  function handleEdit(bonCommande) {
+    setEditId(bonCommande._id);
     setForm({
-      numeroCommande: commande.numeroCommande,
-      dateCommande: commande.dateCommande?.slice(0, 10) || "",
-      type: commande.typeBonCommande || "achat",
-      listeProduits: (commande.listeProduits || []).map((lp) => ({
+      numeroCommande: bonCommande.numeroCommande,
+      dateCommande: bonCommande.dateCommande?.slice(0, 10),
+      typeBonCommande: bonCommande.typeBonCommande,
+      listeProduits: (bonCommande.listeProduits || []).map((lp) => ({
         idProduit: lp.idProduit?._id || lp.idProduit,
-        nomProduit: lp.idProduit?.nom || lp.nomProduit || "Produit inconnu",
-        quantite: lp.quantite || 1,
+        nomProduit: lp.nomProduit || (lp.idProduit?.nom) || "",
+        quantite: lp.quantite,
       })),
-      statut: commande.statut || "En attente",
-      fournisseur: commande.fournisseur?._id || "",
-      client: commande.client?._id || "",
-      description: commande.description || "",
+      statut: bonCommande.statut,
+      fournisseur: bonCommande.fournisseur?._id || bonCommande.fournisseur || "",
+      client: bonCommande.client?._id || bonCommande.client || "",
+      description: bonCommande.description || "",
     });
-  };
+  }
 
-  const handleDelete = async (id) => {
-    try {
-      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-      fetchCommandes();
-    } catch (err) {
-      console.error("Erreur delete:", err);
+  // Delete bonCommande
+  async function handleDelete(id) {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce bon de commande?")) {
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(`${API_URL}/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        fetchBonCommandes();
+        alert("Bon de commande supprimé avec succès!");
+      } catch (error) {
+        console.error("Delete error:", error);
+        alert("Erreur lors de la suppression");
+      }
     }
-  };
+  }
 
-  // --- Render ---
   return (
-    <div style={{ maxWidth: "900px", margin: "auto", padding: "1rem" }}>
+    <div style={{ maxWidth: "1000px", margin: "auto", padding: "1rem" }}>
       <h2>{editId ? "Modifier Bon de Commande" : "Ajouter Bon de Commande"}</h2>
+
       <form onSubmit={handleSubmit} style={{ marginBottom: "1.5rem" }}>
-        <input
-          placeholder="Numéro Commande"
-          value={form.numeroCommande}
-          onChange={(e) => setForm({ ...form, numeroCommande: e.target.value })}
-          required
-        />
-        <input
-          type="date"
-          value={form.dateCommande}
-          onChange={(e) => setForm({ ...form, dateCommande: e.target.value })}
-        />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+          <input
+            placeholder="Numéro Commande"
+            value={form.numeroCommande}
+            onChange={(e) => setForm({ ...form, numeroCommande: e.target.value })}
+            required
+          />
+          <input
+            type="date"
+            value={form.dateCommande}
+            onChange={(e) => setForm({ ...form, dateCommande: e.target.value })}
+            required
+          />
+        </div>
 
-        <select
-          value={form.type}
-          onChange={(e) =>
-            setForm({ ...form, type: e.target.value, fournisseur: "", client: "" })
-          }
-        >
-          <option value="achat">Achat</option>
-          <option value="vente">Vente</option>
-        </select>
+        {/* ✅ CRITICAL: Type selector */}
+        <div style={{ marginBottom: "1rem" }}>
+          <label>Type de Bon de Commande:</label>
+          <select
+            value={form.typeBonCommande}
+            onChange={(e) => handleTypeChange(e.target.value)}
+            required
+            style={{ marginLeft: "0.5rem" }}
+          >
+            <option value="achat">Achat (vers fournisseur)</option>
+            <option value="vente">Vente (du client)</option>
+          </select>
+        </div>
 
-        {form.type === "achat" && (
+        {/* ✅ Conditional rendering based on type */}
+        {form.typeBonCommande === "achat" && (
           <select
             value={form.fournisseur}
             onChange={(e) => setForm({ ...form, fournisseur: e.target.value })}
             required
+            style={{ marginBottom: "1rem", width: "100%" }}
           >
-            <option value="">-- Choisir fournisseur --</option>
+            <option value="">-- Choisir fournisseur ({fournisseurs.length}) --</option>
             {fournisseurs.map((f) => (
               <option key={f._id} value={f._id}>
-                {getFournisseurName(f)}
+                {f.name || f.nom}
               </option>
             ))}
           </select>
         )}
-        {form.type === "vente" && (
+
+        {form.typeBonCommande === "vente" && (
           <select
             value={form.client}
             onChange={(e) => setForm({ ...form, client: e.target.value })}
             required
+            style={{ marginBottom: "1rem", width: "100%" }}
           >
-            <option value="">-- Choisir client --</option>
+            <option value="">-- Choisir client ({clients.length}) --</option>
             {clients.map((c) => (
               <option key={c._id} value={c._id}>
-                {getClientName(c)}
+                {c.name || c.nom}
               </option>
             ))}
           </select>
@@ -240,6 +337,7 @@ export default function BonCommandeManager() {
         <select
           value={form.statut}
           onChange={(e) => setForm({ ...form, statut: e.target.value })}
+          style={{ marginBottom: "1rem", width: "100%" }}
         >
           <option>En attente</option>
           <option>En cours</option>
@@ -248,108 +346,129 @@ export default function BonCommandeManager() {
         </select>
 
         <textarea
-          placeholder="Description"
+          placeholder="Description (optionnelle)"
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
+          style={{ marginBottom: "1rem", width: "100%", height: "60px" }}
         />
 
-        <h4>Produits commandés</h4>
+        <h4>Produits ({form.listeProduits.length})</h4>
         {form.listeProduits.map((p, index) => (
-          <div key={index} className="product-row">
+          <div key={index} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem", alignItems: "center" }}>
             <select
               value={p.idProduit}
               onChange={(e) => updateProduit(index, "idProduit", e.target.value)}
               required
+              style={{ flex: 2 }}
             >
-              <option value={p.idProduit}>
-                {p.nomProduit ||
-                  produits.find((prod) => prod._id === p.idProduit)?.nom ||
-                  "Choisir produit"}
-              </option>
-              {produits
-                .filter((prod) => prod._id !== p.idProduit)
-                .map((prod) => (
-                  <option key={prod._id} value={prod._id}>
-                    {prod.nom} ({prod.prixUnitaire}€)
-                  </option>
-                ))}
+              <option value="">Choisir produit</option>
+              {produits.map((prod) => (
+                <option key={prod._id} value={prod._id}>
+                  {prod.nom} ({prod.prixUnitaire || 0}€)
+                </option>
+              ))}
             </select>
-
             <input
               type="number"
               min="1"
+              placeholder="Qté"
               value={p.quantite}
-              onChange={(e) =>
-                updateProduit(index, "quantite", Number(e.target.value))
-              }
+              onChange={(e) => updateProduit(index, "quantite", Number(e.target.value))}
               required
+              style={{ width: "80px" }}
             />
-            <button type="button" onClick={() => removeProduit(index)}>
-              ❌
+            <button type="button" onClick={() => removeProduit(index)} style={{ background: "red", color: "white" }}>
+              ✕
             </button>
           </div>
         ))}
-        <button type="button" onClick={addProduitToListe}>
+
+        <button type="button" onClick={addProduitToListe} style={{ marginBottom: "1rem" }}>
           + Ajouter produit
         </button>
 
         <br />
-        <br />
-        <button type="submit">{editId ? "Mettre à jour" : "Ajouter"}</button>
+        <button type="submit" style={{ background: "green", color: "white", padding: "0.5rem 1rem" }}>
+          {editId ? "Mettre à jour" : "Ajouter"}
+        </button>
+        {editId && (
+          <button 
+            type="button" 
+            onClick={() => {
+              setEditId(null);
+              setForm({
+                numeroCommande: "",
+                dateCommande: "",
+                typeBonCommande: "achat",
+                listeProduits: [],
+                statut: "En attente",
+                fournisseur: "",
+                client: "",
+                description: "",
+              });
+            }}
+            style={{ background: "gray", color: "white", padding: "0.5rem 1rem", marginLeft: "0.5rem" }}
+          >
+            Annuler
+          </button>
+        )}
       </form>
 
-      <h2>Liste des Bons de Commande</h2>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <h2>Liste des Bons de Commande ({bonCommandes.length})</h2>
+      <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid #ddd" }}>
         <thead>
-          <tr>
-            <th>Numéro</th>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Fournisseur / Client</th>
-            <th>Produits</th>
-            <th>Statut</th>
-            <th>Description</th>
-            <th>Actions</th>
+          <tr style={{ background: "#f5f5f5" }}>
+            <th style={{ border: "1px solid #ddd", padding: "8px" }}>Numéro</th>
+            <th style={{ border: "1px solid #ddd", padding: "8px" }}>Date</th>
+            <th style={{ border: "1px solid #ddd", padding: "8px" }}>Type</th>
+            <th style={{ border: "1px solid #ddd", padding: "8px" }}>Fournisseur/Client</th>
+            <th style={{ border: "1px solid #ddd", padding: "8px" }}>Produits</th>
+            <th style={{ border: "1px solid #ddd", padding: "8px" }}>Statut</th>
+            <th style={{ border: "1px solid #ddd", padding: "8px" }}>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {commandes.length === 0 ? (
+          {bonCommandes.length === 0 ? (
             <tr>
-              <td colSpan="8" style={{ textAlign: "center" }}>
+              <td colSpan="7" style={{ textAlign: "center", padding: "20px", border: "1px solid #ddd" }}>
                 Aucun bon de commande trouvé.
               </td>
             </tr>
           ) : (
-            commandes.map((commande) => (
-              <tr key={commande._id}>
-                <td>{commande.numeroCommande}</td>
-                <td>{commande.dateCommande?.slice(0, 10) || "—"}</td>
-                <td>{commande.typeBonCommande || "—"}</td>
-                <td>
-                  {commande.typeBonCommande === "achat"
-                    ? getFournisseurName(commande.fournisseur)
-                    : getClientName(commande.client)}
+            bonCommandes.map((bc) => (
+              <tr key={bc._id}>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{bc.numeroCommande}</td>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                  {bc.dateCommande ? new Date(bc.dateCommande).toLocaleDateString() : "—"}
                 </td>
-                <td>
-                  {Array.isArray(commande.listeProduits) &&
-                  commande.listeProduits.length > 0 ? (
-                    <ul style={{ paddingLeft: "1rem", margin: 0 }}>
-                      {commande.listeProduits.map((p, idx) => (
-                        <li key={idx}>
-                          {p.idProduit?.nom || p.nomProduit || "Produit inconnu"} —{" "}
-                          {p.quantite || 1}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    "—"
-                  )}
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                  <span style={{ 
+                    background: bc.typeBonCommande === "achat" ? "#e3f2fd" : "#f3e5f5",
+                    padding: "2px 6px",
+                    borderRadius: "4px"
+                  }}>
+                    {bc.typeBonCommande}
+                  </span>
                 </td>
-                <td>{commande.statut || "—"}</td>
-                <td>{commande.description || "—"}</td>
-                <td>
-                  <button onClick={() => handleEdit(commande)}>✏️</button>{" "}
-                  <button onClick={() => handleDelete(commande._id)}>🗑️</button>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                  {bc.typeBonCommande === "achat" 
+                    ? (bc.fournisseur?.name || bc.fournisseur?.nom || "Fournisseur non trouvé")
+                    : (bc.client?.name || bc.client?.nom || "Client non trouvé")
+                  }
+                </td>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                  {bc.listeProduits?.map((lp, i) => (
+                    <div key={i} style={{ fontSize: "0.9em" }}>
+                      {lp.nomProduit} × {lp.quantite}
+                    </div>
+                  ))}
+                </td>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{bc.statut}</td>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                  <button onClick={() => handleEdit(bc)} style={{ marginRight: "5px" }}>Modifier</button>
+                  <button onClick={() => handleDelete(bc._id)} style={{ background: "red", color: "white" }}>
+                    Supprimer
+                  </button>
                 </td>
               </tr>
             ))

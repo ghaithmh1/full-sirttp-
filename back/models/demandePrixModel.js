@@ -40,12 +40,17 @@ const DemandePrixSchema = new mongoose.Schema({
   },
   fournisseur: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Fournisseur', // référence à ton modèle Fournisseur
+    ref: 'Fournisseur', 
     required: true
   },
   description: {
     type: String
-  }
+  },
+  entrepriseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Entreprise",
+      required: true
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('DemandePrix', DemandePrixSchema);
