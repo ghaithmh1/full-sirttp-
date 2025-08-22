@@ -1,0 +1,75 @@
+.Admin-app {
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Navbar en haut */
+.Admin-navbar {
+  height: 60px;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+/* Layout principal : sidebar à gauche + contenu à droite */
+.Admin-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.Admin-sidebar {
+  width: 200px;
+  background-color: #f4f4f4;
+  border-right: 1px solid #ccc;
+  padding: 20px;
+  box-sizing: border-box;
+  height: 100%; /* important pour qu’il occupe toute la hauteur */
+}
+
+
+.Admin-sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.Admin-sidebar li {
+  padding: 10px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.Admin-sidebar li:hover,
+.Admin-sidebar li.active {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Contenu principal à droite du sidebar */
+.Admin-app-main-content {
+  padding: 20px;
+  flex: 1; /* prend tout l’espace restant à côté du sidebar */
+  overflow-y: auto; /* scroll si contenu trop grand */
+}
+
+/* Responsive : sidebar au dessus du contenu sur petit écran */
+@media (max-width: 768px) {
+  .Admin-layout {
+    flex-direction: column;
+  }
+
+  .Admin-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+  }
+}

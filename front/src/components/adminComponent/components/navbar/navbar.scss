@@ -1,0 +1,51 @@
+/* Navbar.scss */
+
+.navbar {
+  height: 100px;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 50px 20px;
+  box-sizing: border-box;
+  justify-content: center; // Stock au milieu
+}
+
+.navbar .nav-link {
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 18px;
+  padding: 10px 20px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.navbar .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar {
+    justify-content: flex-start;
+  }
+
+  .navbar .nav-link {
+    font-size: 16px;
+    padding: 8px 12px;
+  }
+
+  .Admin-layout {
+    flex-direction: column;
+    display: flex;
+  }
+
+  .Admin-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .Admin-app-main-content {
+    padding: 10px;
+  }
+}

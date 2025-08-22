@@ -84,3 +84,17 @@
   background-color: #e9ecef;
   border-color: #ced4da;
 }
+.forgot-button {
+  background-color: transparent;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 10px;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.forgot-button:hover {
+  color: #0056b3;
+}
