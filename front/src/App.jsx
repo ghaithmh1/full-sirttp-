@@ -18,6 +18,8 @@ import DemandePrixManager from './components/DemandePrix/demandePrixManager.jsx'
 import BonCommandeManager from './components/BonCommande/bonCommandeManager.jsx';
 import Navbar from './components/usercomponents/navbar.jsx';
 import ActivityTable from './components/Activity/ActivityTable.jsx';
+import AdminApp from "./components/adminComponent/admin.jsx";
+
 import './App.css';
 function App() {
   return (
@@ -28,13 +30,13 @@ function App() {
         <Routes>
           <Route path="/Register" element={<Register />} />
 
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Login />} />
           <Route path="/entreprise" element={<CreateEntreprise />} />
           <Route path="/joindreEntreprise" element={<JoindreEntreprise />} />
           <Route path="/ChoixEntreprise" element={<ChoixEntreprise />} />
 
 
-          <Route path="/" element={<Home />} />
+          <Route path="/Home" element={<Home />} />
 
            <Route path="/activity" element={<ActivityTable />} />  
 
@@ -68,7 +70,8 @@ function App() {
           <Route path="/produits" element={<ProduitManager />} />
           <Route path="/demandesPrix" element={<DemandePrixManager/>} />
           <Route path="/bonsCommande" element={<BonCommandeManager/>} />
-
+           
+           <Route path="/Admin"element={<AdminApp/>} />
 
         </Routes>
       </div>

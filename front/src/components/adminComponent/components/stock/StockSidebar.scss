@@ -1,0 +1,27 @@
+/* StockSidebar.scss */
+.sidebar {
+  width: 100px;
+  background-color: #1d3479;
+  color: white;
+  border-right: 1px solid #ccc;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  padding: 10px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.sidebar li:hover {
+  background-color: #ddd;
+}

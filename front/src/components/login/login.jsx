@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css"; // Import du fichier CSS
 
@@ -7,6 +7,10 @@ export default function LoginForm() {
   const [pwd, setPwd] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  useEffect(() => {
+    localStorage.clear();
+    console.log("localStorage vidé");
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,10 +30,20 @@ export default function LoginForm() {
         const data = await res.json();
         console.log("Connexion réussie :", data);
 
+        // 🔹 Sauvegarde du token et infos utilisateur
         localStorage.setItem("token", data.data.token);
         localStorage.setItem("userId", data.data._id);
+        localStorage.setItem("role", data.data.role); // 🔹 ajouté
 
-        navigate("/home");
+        // 🔹 Redirection selon rôle
+        if (data.data.role === "admin") {
+          navigate("/admin");
+        } else if (data.data.role === "bank") {
+          navigate("/bank");
+        } else {
+          navigate("/home");
+        }
+
       } else {
         const errData = await res.json();
         setError(errData.message || "Une erreur est survenue");
@@ -73,6 +87,13 @@ export default function LoginForm() {
           className="secondary-button"
         >
           Créer un compte
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/forgotpass")}
+          className="forgot-button"
+        >
+          Mot de passe oublié ?
         </button>
       </div>
     </form>
